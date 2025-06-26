@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📁 Gestor de PDFs</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/styles.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-folder-open"></i> Gestor de PDFs</h1>
+            <p class="subtitle">Organiza tus archivos PDF de forma simple</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Panel de Acciones -->
+            <section class="card actions-panel">
+                <div class="action-buttons">
+                    <button id="newFolderBtn" class="action-btn">
+                        <i class="fas fa-folder-plus"></i>
+                        <span>Nuevo Directorio</span>
+                    </button>
+                    <button id="uploadBtn" class="action-btn">
+                        <i class="fas fa-upload"></i>
+                        <span>Subir PDF</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Explorador de Archivos -->
+            <section class="card file-explorer">
+                <div class="explorer-header">
+                    <h2><i class="fas fa-folder"></i> Explorador</h2>
+                    <button id="refreshBtn" class="icon-btn" title="Actualizar">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                
+                <div class="breadcrumb">
+                    <div id="breadcrumbPath" class="breadcrumb-path">
+                        <span class="breadcrumb-item" onclick="pdfManager.navigateTo('')">
+                            <i class="fas fa-home"></i> Inicio
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="explorer-content">
+                    <div id="directoryList" class="directory-list">
+                        <div class="loading">Cargando...</div>
+                    </div>
+                    <div id="fileList" class="file-list">
+                        <div class="empty-state">No hay archivos en este directorio</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Notificaciones -->
+        <div id="notifications" class="notifications"></div>
+    </div>
+
+    <!-- Modal para Nuevo Directorio -->
+    <div id="folderModal" class="modal">
+        <div class="modal-content">
+            <h3><i class="fas fa-folder-plus"></i> Crear Directorio</h3>
+            <form id="createDirForm" class="simple-form">
+                <input type="text" id="dirPath" name="path" placeholder="Nombre del directorio" required>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('folderModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Subir Archivo -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <h3><i class="fas fa-upload"></i> Subir PDF</h3>
+            <form id="uploadForm" class="simple-form" enctype="multipart/form-data">
+                <div class="file-drop-zone" id="fileDropZone">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Arrastra un archivo PDF aquí o haz clic para seleccionar</p>
+                    <input type="file" id="pdfFile" name="file" accept=".pdf" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('uploadModal')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Subir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h3 id="confirmTitle"></h3>
+            <p id="confirmMessage"></p>
+            <div class="modal-actions">
+                <button id="confirmCancel" class="btn btn-secondary">Cancelar</button>
+                <button id="confirmOk" class="btn btn-danger">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html> 

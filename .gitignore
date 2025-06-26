@@ -1,0 +1,62 @@
+# Entorno virtual
+venv/
+env/
+ENV/
+
+# Archivos de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Archivos de configuración local
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+logs/
+
+# Archivos temporales
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+.Rhistory
+
+# Directorio de uploads (archivos subidos por usuarios)
+uploads/
+!uploads/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Base de datos
+*.db
+*.sqlite
+*.sqlite3
+
+# Archivos de configuración del sistema
+*.pid
+*.seed
+*.pid.lock 
