@@ -1,14 +1,15 @@
 # PDF Manager
 
-A web application for managing directories and PDF files with a modern, minimalist interface.
+A web application for managing directories and PDF files with a modern, minimalist interface and modular architecture.
 
 ## Features
 
 - **Directory Management**: Create, navigate, and delete directories
 - **PDF Upload**: Drag & drop or click to upload PDF files
 - **File Operations**: Download and delete PDF files
-- **Expandable Directories**: View directory contents without navigation
-- **Breadcrumb Navigation**: Clear path indication
+- **Expandable Directories**: View directory contents with nested subdirectories
+- **Breadcrumb Navigation**: Clear horizontal path indication
+- **Modular Frontend**: Organized JavaScript and CSS architecture
 - **Responsive Design**: Works on desktop and mobile devices
 
 ## Technology Stack
@@ -19,9 +20,9 @@ A web application for managing directories and PDF files with a modern, minimali
 - **Uvicorn**: ASGI server
 
 ### Frontend
-- **Vanilla JavaScript**: No framework dependencies
+- **Vanilla JavaScript**: Modular architecture with ES6 modules
 - **HTML5**: Semantic markup
-- **CSS3**: Modern styling with Flexbox
+- **CSS3**: Modular styling with modern design patterns
 - **Font Awesome**: Icons
 
 ## Project Structure
@@ -36,10 +37,25 @@ workplace/
 │   ├── main.py           # FastAPI application
 │   ├── models.py         # Data models
 │   └── services.py       # Business logic
-├── static/                # Frontend files
+├── static/                # Frontend files (modular)
 │   ├── index.html        # Main HTML page
-│   ├── styles.css        # CSS styles
-│   └── app.js           # JavaScript application
+│   ├── css/              # Modular CSS files
+│   │   ├── main.css      # Main CSS imports
+│   │   ├── base.css      # Base styles
+│   │   ├── header.css    # Header and navigation
+│   │   ├── actions.css   # Action buttons
+│   │   ├── explorer.css  # File explorer
+│   │   ├── modals.css    # Modal dialogs
+│   │   └── notifications.css # Notifications
+│   ├── js/               # Modular JavaScript
+│   │   ├── app.js        # Main application
+│   │   └── modules/      # JavaScript modules
+│   │       ├── api.js    # API communication
+│   │       ├── fileManager.js # File operations
+│   │       ├── renderer.js # UI rendering
+│   │       ├── ui.js     # UI interactions
+│   │       └── validation.js # Form validation
+│   └── README.md         # Frontend documentation
 ├── uploads/              # PDF file storage
 ├── docs/                 # Documentation
 ├── scripts/              # Utility scripts
@@ -108,10 +124,40 @@ workplace/
 - Click directory names to navigate
 - Use breadcrumb to navigate back
 - Click ".." to go to parent directory
+- Expand directories to view contents without navigation
+
+### Directory Expansion
+- Click the chevron icon next to directories to expand/collapse
+- Expanded directories show both subdirectories and files
+- Subdirectories can be expanded independently
+- Navigate to subdirectories by clicking their names
 
 ### File Operations
 - Click download icon to download file
 - Click trash icon to delete file/directory
+
+## Frontend Architecture
+
+### Modular JavaScript
+The frontend uses ES6 modules for better organization:
+
+- **app.js**: Main application coordinator
+- **api.js**: API communication layer
+- **fileManager.js**: File and directory operations
+- **renderer.js**: UI rendering and updates
+- **ui.js**: User interface interactions
+- **validation.js**: Form validation logic
+
+### Modular CSS
+CSS is organized by functionality:
+
+- **main.css**: Imports all CSS modules
+- **base.css**: Global styles and variables
+- **header.css**: Header and breadcrumb styles
+- **actions.css**: Button and action styles
+- **explorer.css**: File explorer styles
+- **modals.css**: Modal dialog styles
+- **notifications.css**: Notification styles
 
 ## Configuration
 
@@ -128,6 +174,7 @@ Environment variables (optional):
 - Use meaningful variable names
 - Keep functions small and focused
 - Add basic comments for complex logic
+- Use ES6 modules for JavaScript organization
 
 ### Git Workflow
 1. Use conventional commit messages
@@ -137,9 +184,10 @@ Environment variables (optional):
 
 ### Testing
 - Test file uploads with different sizes
-- Verify directory navigation
+- Verify directory navigation and expansion
 - Check responsive design on mobile
 - Test error handling
+- Verify modular frontend functionality
 
 ## Deployment
 
@@ -180,6 +228,11 @@ chmod +x scripts/git-helpers.sh
 - Verify file is PDF format
 - Check uploads directory permissions
 
+**Frontend modules not loading**
+- Check browser console for module errors
+- Verify all CSS and JS files are accessible
+- Clear browser cache
+
 ### Logs
 - Application logs are printed to console
 - Check for error messages in browser console
@@ -199,4 +252,9 @@ This project is open source and available under the MIT License.
 
 ## Version History
 
-See [CHANGELOG.md](../CHANGELOG.md) for detailed version history. 
+### Latest Changes
+- **Directory Expansion**: Improved to show subdirectories and files when expanded
+- **Modular Frontend**: Reorganized JavaScript and CSS into modules
+- **Breadcrumb UI**: Horizontal layout with improved styling
+- **Parent Directory Button**: Minimalist design with better UX
+- **Code Organization**: Better separation of concerns in frontend 

@@ -5,6 +5,42 @@ Todas las notables mejoras y cambios en este proyecto serán documentadas en est
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 26/06/2025
+
+### Añadido
+- 🏗️ **Arquitectura modular del frontend**
+  - Reorganización de JavaScript en módulos ES6
+  - Separación de CSS en archivos modulares por funcionalidad
+  - Mejor organización del código con separación de responsabilidades
+  - Documentación de la estructura modular
+
+### Mejorado
+- 📁 **Funcionalidad de expansión de directorios**
+  - Los directorios expandidos ahora muestran subdirectorios y archivos
+  - Soporte para expansión anidada de subdirectorios
+  - Mejor experiencia de navegación sin perder contexto
+  - Nuevo método `filterDirectoriesForPath` para expansión
+
+- 🍞 **Breadcrumb horizontal**
+  - Cambio de layout vertical a horizontal
+  - Mejor integración visual con la interfaz
+  - Scroll horizontal cuando el path es muy largo
+  - Corrección de clase CSS para consistencia
+
+- 🔙 **Botón de directorio padre**
+  - Diseño minimalista con texto ".."
+  - Estilos discretos que se integran mejor con la interfaz
+  - Icono de flecha hacia arriba más intuitivo
+  - Efectos hover sutiles
+
+### Corregido
+- 🔧 **Renderizado de contenido de directorios**
+  - Método `renderDirectoryContent` actualizado para manejar subdirectorios
+  - Corrección de parámetros para mostrar tanto directorios como archivos
+  - Mejor manejo de estados vacíos en directorios expandidos
+
+---
+
 ## [1.1.0] - 26/06/2025
 
 ### Mejorado
@@ -53,10 +89,11 @@ workplace/
 │   ├── models.py          # Modelos de datos
 │   ├── services.py        # Lógica de negocio
 │   └── main.py           # Aplicación FastAPI
-├── static/                # Frontend
+├── static/                # Frontend modular
 │   ├── index.html        # Interfaz principal
-│   ├── styles.css        # Estilos
-│   └── app.js           # JavaScript
+│   ├── css/              # CSS modular
+│   ├── js/               # JavaScript modular
+│   └── README.md         # Documentación frontend
 ├── uploads/              # Archivos subidos
 ├── requirements.txt      # Dependencias
 └── README.md            # Documentación
