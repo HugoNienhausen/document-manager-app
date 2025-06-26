@@ -1,0 +1,274 @@
+/* Explorer CSS - Explorador de archivos y directorios */
+
+/* Header del explorador */
+.explorer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.explorer-header h2 {
+    font-size: 1.125rem;
+    color: #1a202c;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.explorer-header h2 i {
+    color: #3b82f6;
+}
+
+/* Lista del explorador */
+.explorer-list {
+    min-height: 200px;
+}
+
+.explorer-item {
+    border-bottom: 1px solid #f1f5f9;
+    background: white;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.explorer-item:last-child {
+    border-bottom: none;
+}
+
+.explorer-item:hover {
+    background: #f8fafc;
+}
+
+.explorer-item.directory {
+    background: white;
+}
+
+.explorer-item.file {
+    background: white;
+}
+
+/* Header de directorio/archivo */
+.directory-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    position: relative;
+}
+
+.directory-toggle {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+    cursor: pointer;
+    border-radius: 4px;
+    color: #64748b;
+}
+
+.directory-toggle:hover {
+    background-color: #f1f5f9;
+    color: #374151;
+}
+
+.directory-toggle.expanded {
+    transform: rotate(90deg);
+}
+
+.directory-toggle i {
+    font-size: 12px;
+}
+
+.directory-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #f59e0b;
+}
+
+.file-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ef4444;
+}
+
+.item-name {
+    flex: 1;
+    font-size: 14px;
+    color: #1e293b;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.item-name:hover {
+    background-color: #f1f5f9;
+}
+
+.item-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.explorer-item:hover .item-actions {
+    opacity: 1;
+}
+
+.action-icon {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #64748b;
+}
+
+.action-icon:hover {
+    background-color: #f1f5f9;
+    color: #1e293b;
+}
+
+.action-icon.delete {
+    color: #ef4444;
+}
+
+.action-icon.delete:hover {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+/* Contenido de directorio */
+.directory-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+.directory-content.expanded {
+    max-height: 1000px;
+}
+
+.directory-content .explorer-item {
+    margin: 0;
+    border-bottom: 1px solid #e2e8f0;
+    padding-left: 20px;
+    background: #f8fafc;
+}
+
+.directory-content .explorer-item:hover {
+    background: #f1f5f9;
+}
+
+/* Directorio padre */
+.parent-dir {
+    background: #fafafa;
+    border-left: 2px solid #e2e8f0;
+    opacity: 0.8;
+}
+
+.parent-dir:hover {
+    background: #f1f5f9;
+    opacity: 1;
+    border-left-color: #3b82f6;
+}
+
+.parent-dir .directory-icon {
+    color: #64748b;
+}
+
+.parent-dir .item-name {
+    color: #64748b;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+.parent-dir:hover .item-name {
+    color: #3b82f6;
+}
+
+/* Listas simples */
+.directory-list, .file-list {
+    list-style: none;
+}
+
+.list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    background: white;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.list-item:hover {
+    background: #f8fafc;
+}
+
+.list-item i {
+    color: #64748b;
+    width: 20px;
+    text-align: center;
+}
+
+.list-item .name {
+    flex: 1;
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.list-item .actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.list-item:hover .actions {
+    opacity: 1;
+}
+
+/* Estados */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .explorer-header {
+        padding: 16px;
+    }
+    
+    .directory-header {
+        padding: 10px 16px;
+    }
+    
+    .list-item .actions {
+        opacity: 1;
+    }
+} 

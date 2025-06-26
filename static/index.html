@@ -5,13 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>📁 Gestor de PDFs</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="/static/styles.css" rel="stylesheet">
+    <link href="/static/css/main.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <header class="header">
-            <h1><i class="fas fa-folder-open"></i> Gestor de PDFs</h1>
-            <p class="subtitle">Organiza tus archivos PDF de forma simple</p>
+            <div class="header-content">
+                <div class="header-title">
+                    <h1><i class="fas fa-folder-open"></i> Gestor de PDFs</h1>
+                    <p class="subtitle">Organiza tus archivos PDF de forma simple</p>
+                </div>
+                <div class="current-path" id="currentPath">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>Inicio</span>
+                </div>
+            </div>
         </header>
 
         <div class="main-content">
@@ -39,8 +47,8 @@
                 </div>
                 
                 <div class="breadcrumb">
-                    <div id="breadcrumbPath" class="breadcrumb-path">
-                        <span class="breadcrumb-item" onclick="pdfManager.navigateTo('')">
+                    <div id="breadcrumb" class="breadcrumb-path">
+                        <span class="breadcrumb-item active">
                             <i class="fas fa-home"></i> Inicio
                         </span>
                     </div>
@@ -62,13 +70,13 @@
     <div id="folderModal" class="modal">
         <div class="modal-content">
             <h3><i class="fas fa-folder-plus"></i> Crear Directorio</h3>
-            <div class="modal-info">
-                <p><i class="fas fa-info-circle"></i> Se creará en: <span id="createLocation">raíz</span></p>
+            <div id="modalInfo" class="modal-info">
+                <p><i class="fas fa-info-circle"></i> El directorio se creará <span>en la raíz</span></p>
             </div>
             <form id="createDirForm" class="simple-form">
-                <input type="text" id="dirPath" name="path" placeholder="Nombre del directorio" required>
+                <input type="text" id="dirName" name="name" placeholder="Nombre del directorio" required>
                 <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('folderModal')">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" onclick="pdfManager.closeModal('folderModal')">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Crear</button>
                 </div>
             </form>
@@ -86,25 +94,14 @@
                     <input type="file" id="pdfFile" name="file" accept=".pdf">
                 </div>
                 <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('uploadModal')">Cancelar</button>
+                    <button type="button" class="btn btn-secondary" onclick="pdfManager.closeModal('uploadModal')">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Subir</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal de Confirmación -->
-    <div id="confirmModal" class="modal">
-        <div class="modal-content">
-            <h3 id="confirmTitle"></h3>
-            <p id="confirmMessage"></p>
-            <div class="modal-actions">
-                <button id="confirmCancel" class="btn btn-secondary">Cancelar</button>
-                <button id="confirmOk" class="btn btn-danger">Confirmar</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="/static/app.js"></script>
+    <!-- Script modular -->
+    <script type="module" src="/static/js/app.js"></script>
 </body>
 </html> 
