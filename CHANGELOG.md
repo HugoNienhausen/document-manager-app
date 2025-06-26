@@ -5,6 +5,22 @@ Todas las notables mejoras y cambios en este proyecto serán documentadas en est
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 26/06/2025
+
+### Mejorado
+- 🎨 **Estructura visual de directorios expandibles**
+  - Contenido expandible ahora se muestra debajo del header del directorio
+  - Mejor jerarquía visual similar al Finder de Apple
+  - Eliminación de alineación horizontal que causaba confusión
+  - Cambio de `flex-direction` a `column` para mejor organización
+
+### Corregido
+- 🔧 **Alineación de elementos en directorios expandibles**
+  - Eliminado `align-items: center` que causaba que el contenido se mostrara al lado
+  - Mejorada la estructura CSS para presentación vertical clara
+
+---
+
 ## [1.0.0] - 26/06/2025
 
 ### Añadido
