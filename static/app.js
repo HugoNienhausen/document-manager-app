@@ -1,5 +1,5 @@
 /**
- * Gestor de PDFs - Interfaz Minimalista
+ * PDF Manager - Frontend Application
  */
 
 class PDFManager {
@@ -10,19 +10,18 @@ class PDFManager {
     }
 
     initializeEventListeners() {
-        // Botones principales
+        // Main buttons
         document.getElementById('newFolderBtn').addEventListener('click', () => this.showFolderModal());
         document.getElementById('uploadBtn').addEventListener('click', () => this.showUploadModal());
         document.getElementById('refreshBtn').addEventListener('click', () => this.loadExplorer());
 
-        // Formularios
+        // Forms
         document.getElementById('createDirForm').addEventListener('submit', (e) => {
             e.preventDefault();
             this.createDirectory();
         });
 
         document.getElementById('uploadForm').addEventListener('submit', (e) => {
-            console.log('📝 Evento submit del formulario de subida capturado');
             e.preventDefault();
             this.uploadFile();
         });
@@ -35,9 +34,8 @@ class PDFManager {
         const dropZone = document.getElementById('fileDropZone');
         const fileInput = document.getElementById('pdfFile');
 
-        // Hacer clic en el área de arrastrar archivos abre el selector
+        // Click on drop zone opens file selector
         dropZone.addEventListener('click', (e) => {
-            // Evitar que se active si se hace clic en el input file
             if (e.target !== fileInput) {
                 fileInput.click();
             }
@@ -68,7 +66,7 @@ class PDFManager {
             }
         });
 
-        // Prevenir que el clic en el input file se propague
+        // Prevent click propagation on file input
         fileInput.addEventListener('click', (e) => {
             e.stopPropagation();
         });
@@ -78,7 +76,7 @@ class PDFManager {
         const dropZone = document.getElementById('fileDropZone');
         const fileInput = document.getElementById('pdfFile');
         
-        // Actualizar solo la información visual, manteniendo el input file
+        // Update visual information
         const icon = dropZone.querySelector('i');
         const text = dropZone.querySelector('p');
         
@@ -89,13 +87,12 @@ class PDFManager {
         if (text) {
             text.textContent = filename;
         } else {
-            // Si no existe el texto, crear uno nuevo
             const newText = document.createElement('p');
             newText.textContent = filename;
             dropZone.appendChild(newText);
         }
         
-        // Asegurar que el input file esté presente y funcional
+        // Ensure file input is present and functional
         if (!dropZone.querySelector('#pdfFile')) {
             const newFileInput = document.createElement('input');
             newFileInput.type = 'file';
@@ -104,7 +101,7 @@ class PDFManager {
             newFileInput.accept = '.pdf';
             newFileInput.style.display = 'none';
             
-            // Restaurar el archivo seleccionado
+            // Restore selected file
             if (fileInput && fileInput.files.length > 0) {
                 const dt = new DataTransfer();
                 dt.items.add(fileInput.files[0]);
@@ -113,14 +110,14 @@ class PDFManager {
             
             dropZone.appendChild(newFileInput);
             
-            // Reconfigurar el evento change
+            // Reconfigure change event
             newFileInput.addEventListener('change', (e) => {
                 if (e.target.files.length > 0) {
                     this.updateFileLabel(e.target.files[0].name);
                 }
             });
             
-            // Prevenir propagación del clic
+            // Prevent click propagation
             newFileInput.addEventListener('click', (e) => {
                 e.stopPropagation();
             });
@@ -129,9 +126,6 @@ class PDFManager {
 
     async apiRequest(endpoint, options = {}) {
         try {
-            console.log(`🌐 Haciendo petición a: /api/v1${endpoint}`);
-            console.log('📋 Opciones:', options);
-            
             const response = await fetch(`/api/v1${endpoint}`, {
                 headers: {
                     'Accept': 'application/json',
@@ -140,43 +134,34 @@ class PDFManager {
                 ...options
             });
 
-            console.log(`📡 Respuesta recibida: ${response.status} ${response.statusText}`);
-
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                console.error('❌ Error en la respuesta:', errorData);
                 
-                // Para errores 422, mostrar detalles específicos
+                // Handle validation errors
                 if (response.status === 422) {
                     if (errorData.detail && Array.isArray(errorData.detail)) {
                         const errorMessages = errorData.detail.map(err => 
                             `${err.loc?.join('.')}: ${err.msg}`
                         ).join(', ');
-                        throw new Error(`Error de validación: ${errorMessages}`);
+                        throw new Error(`Validation error: ${errorMessages}`);
                     } else if (errorData.detail) {
-                        throw new Error(`Error de validación: ${errorData.detail}`);
+                        throw new Error(`Validation error: ${errorData.detail}`);
                     }
                 }
                 
                 throw new Error(errorData.detail || `Error ${response.status}: ${response.statusText}`);
             }
 
-            // Solo intentar parsear como JSON si el content-type es application/json
+            // Parse response based on content type
             const contentType = response.headers.get('content-type');
-            console.log('📄 Content-Type:', contentType);
             
             if (contentType && contentType.includes('application/json')) {
-                const jsonResult = await response.json();
-                console.log('📄 Respuesta JSON:', jsonResult);
-                return jsonResult;
+                return await response.json();
             } else {
-                // Para respuestas que no son JSON (como subida de archivos)
-                const textResult = await response.text();
-                console.log('📄 Respuesta texto:', textResult);
-                return textResult;
+                return await response.text();
             }
         } catch (error) {
-            console.error('❌ Error en apiRequest:', error);
+            console.error('API request error:', error);
             throw error;
         }
     }
@@ -202,22 +187,18 @@ class PDFManager {
     showFolderModal() {
         document.getElementById('folderModal').style.display = 'block';
         
-        // Actualizar la información de ubicación
-        const locationSpan = document.getElementById('createLocation');
-        if (this.currentPath) {
-            locationSpan.textContent = this.currentPath;
-        } else {
-            locationSpan.textContent = 'raíz';
-        }
-        
-        document.getElementById('dirPath').value = '';
-        document.getElementById('dirPath').focus();
+        // Update modal info
+        const modalInfo = document.getElementById('modalInfo');
+        const location = this.currentPath ? `en "${this.currentPath}"` : 'en la raíz';
+        modalInfo.innerHTML = `
+            <p><i class="fas fa-info-circle"></i> El directorio se creará <span>${location}</span></p>
+        `;
     }
 
     showUploadModal() {
         document.getElementById('uploadModal').style.display = 'block';
         
-        // Limpiar el contenido anterior
+        // Clear previous content
         const dropZone = document.getElementById('fileDropZone');
         dropZone.innerHTML = `
             <i class="fas fa-cloud-upload-alt"></i>
@@ -225,7 +206,7 @@ class PDFManager {
             <input type="file" id="pdfFile" name="file" accept=".pdf">
         `;
         
-        // Reconfigurar el drag and drop después de recrear el contenido
+        // Reconfigure drag and drop
         this.setupDragAndDrop();
     }
 
@@ -241,12 +222,8 @@ class PDFManager {
         }
 
         try {
-            // Construir la ruta completa del nuevo directorio
+            // Build full path for new directory
             const fullPath = this.currentPath ? `${this.currentPath}/${dirName}` : dirName;
-            
-            console.log('📁 Creando directorio:', fullPath);
-            console.log('📍 Directorio actual:', this.currentPath || 'raíz');
-            console.log('📝 Nombre del directorio:', dirName);
 
             const formData = new FormData();
             formData.append('path', fullPath);
@@ -260,76 +237,54 @@ class PDFManager {
             this.closeModal('folderModal');
             this.loadExplorer();
         } catch (error) {
-            console.error('❌ Error al crear directorio:', error);
+            console.error('Error creating directory:', error);
             this.showNotification(error.message, 'error');
         }
     }
 
     async uploadFile() {
-        console.log('🔍 Iniciando subida de archivo...');
-        
         const fileInput = document.getElementById('pdfFile');
-        console.log('📄 Input file encontrado:', fileInput);
         
         if (!fileInput) {
-            console.error('❌ No se encontró el input file');
             this.showNotification('Error: No se pudo acceder al selector de archivos', 'error');
             return;
         }
         
         const file = fileInput.files[0];
-        console.log('📄 Archivo seleccionado:', file);
 
         if (!file) {
-            console.log('❌ No hay archivo seleccionado');
             this.showNotification('Por favor selecciona un archivo PDF', 'error');
             return;
         }
 
-        // Validar que es un archivo PDF
+        // Validate PDF file
         if (!file.name.toLowerCase().endsWith('.pdf')) {
-            console.log('❌ El archivo no es un PDF');
             this.showNotification('Por favor selecciona solo archivos PDF', 'error');
             return;
         }
 
-        // Validar tamaño del archivo (máximo 50MB)
-        const maxSize = 50 * 1024 * 1024; // 50MB
+        // Validate file size (max 50MB)
+        const maxSize = 50 * 1024 * 1024;
         if (file.size > maxSize) {
-            console.log('❌ El archivo es demasiado grande');
             this.showNotification('El archivo es demasiado grande. Máximo 50MB', 'error');
             return;
         }
 
         try {
-            console.log('📤 Preparando FormData...');
             const formData = new FormData();
             formData.append('file', file);
             formData.append('path', this.currentPath || '');
-            
-            console.log('📁 Ruta actual:', this.currentPath);
-            console.log('📄 Nombre del archivo:', file.name);
-            console.log('📏 Tamaño del archivo:', file.size);
-            console.log('📄 Tipo MIME del archivo:', file.type);
-            
-            // Verificar contenido del FormData
-            console.log('📋 Contenido del FormData:');
-            for (let [key, value] of formData.entries()) {
-                console.log(`  ${key}:`, value);
-            }
 
-            console.log('🚀 Enviando archivo al servidor...');
             const result = await this.apiRequest('/files/upload', {
                 method: 'POST',
                 body: formData
             });
 
-            console.log('✅ Respuesta del servidor:', result);
             this.showNotification('Archivo subido exitosamente', 'success');
             this.closeModal('uploadModal');
             this.loadExplorer();
         } catch (error) {
-            console.error('❌ Error en la subida:', error);
+            console.error('Upload error:', error);
             this.showNotification(error.message, 'error');
         }
     }
@@ -341,7 +296,7 @@ class PDFManager {
                 this.currentPath ? this.apiRequest(`/files/${encodeURIComponent(this.currentPath)}`) : []
             ]);
 
-            // Filtrar directorios que pertenecen al directorio actual
+            // Filter directories for current path
             const directories = this.filterDirectoriesForCurrentPath(allDirectories);
             
             this.renderExplorer(directories, files);
@@ -352,19 +307,17 @@ class PDFManager {
 
     filterDirectoriesForCurrentPath(allDirectories) {
         if (!this.currentPath) {
-            // En la raíz, mostrar solo directorios de primer nivel
+            // Root level - show only first level directories
             return allDirectories.filter(dir => !dir.includes('/'));
         }
 
-        // Para subdirectorios, mostrar solo los que están directamente dentro del directorio actual
+        // Subdirectories - show only direct children
         const currentPathPrefix = this.currentPath + '/';
         return allDirectories.filter(dir => {
-            // Debe empezar con el prefijo del directorio actual
             if (!dir.startsWith(currentPathPrefix)) {
                 return false;
             }
             
-            // Debe ser un directorio directo (no un subdirectorio más profundo)
             const relativePath = dir.substring(currentPathPrefix.length);
             return !relativePath.includes('/');
         });
@@ -373,10 +326,10 @@ class PDFManager {
     renderExplorer(directories, files) {
         const explorerList = document.getElementById('explorerList');
 
-        // Actualizar breadcrumb dinámico
+        // Update breadcrumb
         this.updateBreadcrumb();
 
-        // Agregar directorio ".." si no estamos en la raíz
+        // Add parent directory ".." if not in root
         let explorerHTML = '';
         if (this.currentPath) {
             explorerHTML += `
@@ -391,7 +344,7 @@ class PDFManager {
             `;
         }
 
-        // Renderizar directorios con funcionalidad expandible
+        // Render directories with expandable functionality
         if (directories.length === 0 && !this.currentPath) {
             explorerHTML += '<div class="empty-state">No hay directorios</div>';
         } else {
@@ -421,7 +374,7 @@ class PDFManager {
             });
         }
 
-        // Renderizar archivos del directorio actual
+        // Render files in current directory
         if (files.length > 0) {
             files.forEach(file => {
                 explorerHTML += `
@@ -496,26 +449,24 @@ class PDFManager {
 
     async downloadFile(path) {
         try {
-            console.log(`🔍 Intentando descargar: ${path}`);
-            
-            // Crear un enlace temporal para la descarga
+            // Create temporary download link
             const link = document.createElement('a');
             link.href = `/api/v1/files/download/${encodeURIComponent(path)}`;
-            link.download = path.split('/').pop(); // Obtener solo el nombre del archivo
+            link.download = path.split('/').pop();
             link.target = '_blank';
             
-            // Añadir el enlace al DOM temporalmente
+            // Add link to DOM temporarily
             document.body.appendChild(link);
             
-            // Hacer clic en el enlace
+            // Click the link
             link.click();
             
-            // Remover el enlace del DOM
+            // Remove link from DOM
             document.body.removeChild(link);
             
             this.showNotification('Descarga iniciada', 'success');
         } catch (error) {
-            console.error('Error al descargar:', error);
+            console.error('Download error:', error);
             this.showNotification(`Error al descargar: ${error.message}`, 'error');
         }
     }
@@ -580,7 +531,7 @@ class PDFManager {
         if (!this.currentPath) return;
         
         const pathParts = this.currentPath.split('/').filter(part => part);
-        pathParts.pop(); // Remover el último directorio
+        pathParts.pop(); // Remove last directory
         this.currentPath = pathParts.join('/');
         this.loadExplorer();
     }
@@ -591,19 +542,19 @@ class PDFManager {
         const content = dirElement.querySelector('.directory-content');
         
         if (content.classList.contains('expanded')) {
-            // Contraer directorio
+            // Collapse directory
             content.classList.remove('expanded');
             toggle.classList.remove('expanded');
         } else {
-            // Expandir directorio
+            // Expand directory
             try {
-                // Cargar contenido del directorio
+                // Load directory content
                 const [subDirectories, files] = await Promise.all([
                     this.apiRequest('/directories'),
                     this.apiRequest(`/files/${encodeURIComponent(path)}`)
                 ]);
 
-                // Filtrar subdirectorios que pertenecen a este directorio
+                // Filter subdirectories for this directory
                 const pathPrefix = path + '/';
                 const relevantDirs = subDirectories.filter(dir => {
                     if (!dir.startsWith(pathPrefix)) return false;
@@ -611,13 +562,13 @@ class PDFManager {
                     return !relativePath.includes('/');
                 });
 
-                // Renderizar contenido del directorio
+                // Render directory content
                 let contentHTML = '';
                 
                 if (relevantDirs.length === 0 && files.length === 0) {
                     contentHTML = '<div class="empty-state">Directorio vacío</div>';
                 } else {
-                    // Renderizar subdirectorios
+                    // Render subdirectories
                     relevantDirs.forEach(dir => {
                         const dirName = dir.split('/').pop();
                         contentHTML += `
@@ -643,7 +594,7 @@ class PDFManager {
                         `;
                     });
 
-                    // Renderizar archivos
+                    // Render files
                     files.forEach(file => {
                         contentHTML += `
                             <div class="explorer-item file">
@@ -672,19 +623,19 @@ class PDFManager {
                 toggle.classList.add('expanded');
                 
             } catch (error) {
-                console.error('Error al cargar contenido del directorio:', error);
+                console.error('Error loading directory content:', error);
                 this.showNotification('Error al cargar contenido del directorio', 'error');
             }
         }
     }
 }
 
-// Funciones globales
+// Global functions
 window.closeModal = (modalId) => {
     document.getElementById(modalId).style.display = 'none';
 };
 
-// Inicializar cuando el DOM esté listo
+// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.pdfManager = new PDFManager();
 }); 

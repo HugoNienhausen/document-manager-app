@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Manager - Technical Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+
+        .nav {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .nav a {
+            text-decoration: none;
+            color: #3498db;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav a:hover {
+            background: #ecf0f1;
+        }
+
+        .section {
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .section h3 {
+            color: #34495e;
+            margin: 25px 0 15px 0;
+        }
+
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .code-block pre {
+            margin: 0;
+        }
+
+        .endpoint {
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .method {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        .url {
+            font-family: monospace;
+            color: #2c3e50;
+        }
+
+        .description {
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        .file-structure {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            font-family: monospace;
+            line-height: 1.8;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .warning {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+            border-top: 1px solid #ecf0f1;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>PDF Manager - Technical Documentation</h1>
+            <p>Comprehensive technical guide for the PDF Manager web application</p>
+        </div>
+
+        <nav class="nav">
+            <ul>
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#api">API Reference</a></li>
+                <li><a href="#frontend">Frontend</a></li>
+                <li><a href="#backend">Backend</a></li>
+                <li><a href="#deployment">Deployment</a></li>
+                <li><a href="#development">Development</a></li>
+            </ul>
+        </nav>
+
+        <section id="architecture" class="section">
+            <h2>System Architecture</h2>
+            
+            <h3>Overview</h3>
+            <p>PDF Manager follows a modern web application architecture with clear separation between frontend and backend components.</p>
+
+            <div class="file-structure">
+workplace/
+├── app/                    # Backend application
+│   ├── api/               # API layer
+│   │   ├── __init__.py
+│   │   └── routes.py      # REST API endpoints
+│   ├── config.py          # Configuration management
+│   ├── main.py           # FastAPI application entry
+│   ├── models.py         # Data models and schemas
+│   └── services.py       # Business logic layer
+├── static/                # Frontend assets
+│   ├── index.html        # Main application page
+│   ├── styles.css        # Application styles
+│   └── app.js           # JavaScript application logic
+├── uploads/              # File storage directory
+├── docs/                 # Documentation
+├── scripts/              # Utility scripts
+└── requirements.txt      # Python dependencies
+            </div>
+
+            <h3>Technology Stack</h3>
+            <table>
+                <tr>
+                    <th>Component</th>
+                    <th>Technology</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td>Backend Framework</td>
+                    <td>FastAPI</td>
+                    <td>Modern Python web framework with automatic API documentation</td>
+                </tr>
+                <tr>
+                    <td>Server</td>
+                    <td>Uvicorn</td>
+                    <td>ASGI server for high-performance async operations</td>
+                </tr>
+                <tr>
+                    <td>Frontend</td>
+                    <td>Vanilla JavaScript</td>
+                    <td>No framework dependencies, lightweight and fast</td>
+                </tr>
+                <tr>
+                    <td>Styling</td>
+                    <td>CSS3 + Flexbox</td>
+                    <td>Modern responsive design</td>
+                </tr>
+                <tr>
+                    <td>Icons</td>
+                    <td>Font Awesome</td>
+                    <td>Professional icon library</td>
+                </tr>
+            </table>
+        </section>
+
+        <section id="api" class="section">
+            <h2>API Reference</h2>
+            
+            <h3>Base URL</h3>
+            <p>All API endpoints are prefixed with <code>/api/v1</code></p>
+
+            <h3>Authentication</h3>
+            <div class="info">
+                Currently, the API does not require authentication. In production, implement proper authentication mechanisms.
+            </div>
+
+            <h3>Directory Endpoints</h3>
+            
+            <div class="endpoint">
+                <div class="method">GET</div>
+                <div class="url">/api/v1/directories</div>
+                <div class="description">Retrieve all directories in the system</div>
+            </div>
+
+            <div class="endpoint">
+                <div class="method">POST</div>
+                <div class="url">/api/v1/directories</div>
+                <div class="description">Create a new directory</div>
+                <div class="code-block">
+<pre>Content-Type: multipart/form-data
+path: string (directory path)</pre>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <div class="method">DELETE</div>
+                <div class="url">/api/v1/directories/{path}</div>
+                <div class="description">Delete a directory and all its contents</div>
+            </div>
+
+            <h3>File Endpoints</h3>
+            
+            <div class="endpoint">
+                <div class="method">GET</div>
+                <div class="url">/api/v1/files/{path}</div>
+                <div class="description">List files in a specific directory</div>
+            </div>
+
+            <div class="endpoint">
+                <div class="method">POST</div>
+                <div class="url">/api/v1/files/upload</div>
+                <div class="description">Upload a PDF file</div>
+                <div class="code-block">
+<pre>Content-Type: multipart/form-data
+file: PDF file
+path: string (target directory, optional)</pre>
+                </div>
+            </div>
+
+            <div class="endpoint">
+                <div class="method">GET</div>
+                <div class="url">/api/v1/files/download/{path}</div>
+                <div class="description">Download a file</div>
+            </div>
+
+            <div class="endpoint">
+                <div class="method">DELETE</div>
+                <div class="url">/api/v1/files/{path}</div>
+                <div class="description">Delete a file</div>
+            </div>
+
+            <h3>Health Check</h3>
+            
+            <div class="endpoint">
+                <div class="method">GET</div>
+                <div class="url">/api/v1/health</div>
+                <div class="description">Application health status</div>
+            </div>
+        </section>
+
+        <section id="frontend" class="section">
+            <h2>Frontend Architecture</h2>
+            
+            <h3>JavaScript Application</h3>
+            <p>The frontend is built using vanilla JavaScript with a class-based architecture:</p>
+
+            <div class="code-block">
+<pre>class PDFManager {
+    constructor() {
+        this.currentPath = '';
+        this.initializeEventListeners();
+        this.loadExplorer();
+    }
+    
+    // Core methods for file and directory management
+    async apiRequest(endpoint, options = {})
+    async loadExplorer()
+    renderExplorer(directories, files)
+    async uploadFile()
+    async createDirectory()
+}</pre>
+            </div>
+
+            <h3>Key Features</h3>
+            <ul>
+                <li><strong>Drag & Drop Upload</strong>: Modern file upload interface</li>
+                <li><strong>Expandable Directories</strong>: View contents without navigation</li>
+                <li><strong>Breadcrumb Navigation</strong>: Clear path indication</li>
+                <li><strong>Responsive Design</strong>: Works on all device sizes</li>
+                <li><strong>Real-time Notifications</strong>: User feedback for actions</li>
+            </ul>
+
+            <h3>CSS Architecture</h3>
+            <p>The styling uses modern CSS features:</p>
+            <ul>
+                <li>Flexbox for layout</li>
+                <li>CSS Grid for complex layouts</li>
+                <li>CSS Variables for theming</li>
+                <li>Media queries for responsiveness</li>
+                <li>CSS animations for smooth interactions</li>
+            </ul>
+        </section>
+
+        <section id="backend" class="section">
+            <h2>Backend Architecture</h2>
+            
+            <h3>FastAPI Application</h3>
+            <p>The backend uses FastAPI for high-performance API development:</p>
+
+            <div class="code-block">
+<pre>from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI(
+    title="PDF Manager",
+    description="Application for managing directories and PDF files",
+    version="1.0.0"
+)</pre>
+            </div>
+
+            <h3>Key Components</h3>
+            
+            <h4>Configuration (config.py)</h4>
+            <p>Centralized configuration management using Pydantic settings.</p>
+
+            <h4>API Routes (api/routes.py)</h4>
+            <p>RESTful API endpoints with automatic request/response validation.</p>
+
+            <h4>Services (services.py)</h4>
+            <p>Business logic layer for file and directory operations.</p>
+
+            <h4>Models (models.py)</h4>
+            <p>Pydantic models for data validation and serialization.</p>
+
+            <h3>Error Handling</h3>
+            <p>The application implements comprehensive error handling:</p>
+            <ul>
+                <li>HTTP status codes for different error types</li>
+                <li>Detailed error messages for debugging</li>
+                <li>Validation errors for malformed requests</li>
+                <li>File system error handling</li>
+            </ul>
+        </section>
+
+        <section id="deployment" class="section">
+            <h2>Deployment Guide</h2>
+            
+            <h3>Production Setup</h3>
+            
+            <div class="warning">
+                <strong>Security Considerations:</strong>
+                <ul>
+                    <li>Set DEBUG=False in production</li>
+                    <li>Configure proper CORS origins</li>
+                    <li>Use HTTPS with SSL certificates</li>
+                    <li>Implement proper authentication</li>
+                </ul>
+            </div>
+
+            <h3>Environment Variables</h3>
+            <table>
+                <tr>
+                    <th>Variable</th>
+                    <th>Default</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>HOST</td>
+                    <td>0.0.0.0</td>
+                    <td>Server host address</td>
+                </tr>
+                <tr>
+                    <td>PORT</td>
+                    <td>8000</td>
+                    <td>Server port number</td>
+                </tr>
+                <tr>
+                    <td>DEBUG</td>
+                    <td>False</td>
+                    <td>Debug mode flag</td>
+                </tr>
+                <tr>
+                    <td>LOG_LEVEL</td>
+                    <td>INFO</td>
+                    <td>Logging level</td>
+                </tr>
+            </table>
+
+            <h3>Docker Deployment</h3>
+            <div class="code-block">
+<pre>FROM python:3.9-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY . .
+
+EXPOSE 8000
+
+CMD ["python", "main.py"]</pre>
+            </div>
+
+            <h3>Nginx Configuration</h3>
+            <div class="code-block">
+<pre>server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://localhost:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location /static/ {
+        alias /path/to/your/app/static/;
+    }
+}</pre>
+            </div>
+        </section>
+
+        <section id="development" class="section">
+            <h2>Development Guide</h2>
+            
+            <h3>Setup Development Environment</h3>
+            <ol>
+                <li>Clone the repository</li>
+                <li>Create virtual environment: <code>python -m venv venv</code></li>
+                <li>Activate virtual environment</li>
+                <li>Install dependencies: <code>pip install -r requirements.txt</code></li>
+                <li>Run the application: <code>python main.py</code></li>
+            </ol>
+
+            <h3>Coding Standards</h3>
+            <ul>
+                <li>Follow PEP 8 for Python code</li>
+                <li>Use meaningful variable and function names</li>
+                <li>Keep functions small and focused</li>
+                <li>Add docstrings for public functions</li>
+                <li>Use type hints where appropriate</li>
+            </ul>
+
+            <h3>Testing</h3>
+            <p>Test the following scenarios:</p>
+            <ul>
+                <li>File upload with different sizes and formats</li>
+                <li>Directory creation and deletion</li>
+                <li>Navigation between directories</li>
+                <li>Error handling for invalid inputs</li>
+                <li>Responsive design on different screen sizes</li>
+            </ul>
+
+            <h3>Git Workflow</h3>
+            <p>Use the provided git helper scripts for consistent workflow:</p>
+            <div class="code-block">
+<pre># Load git helpers
+source scripts/git-helpers.sh
+
+# Make a commit
+git_commit 'feat: add new feature'
+
+# Create a new version
+create_version '1.2.0' 'New feature release'
+
+# Update changelog
+update_changelog '1.2.0' 'Added' 'New feature description'</pre>
+            </div>
+        </section>
+
+        <div class="footer">
+            <p>&copy; 2024 PDF Manager. This documentation is part of the project.</p>
+            <p>For more information, see the <a href="../README.md">main README</a> and <a href="../CHANGELOG.md">changelog</a>.</p>
+        </div>
+    </div>
+</body>
+</html> 

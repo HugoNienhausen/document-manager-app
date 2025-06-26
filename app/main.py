@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Aplicación principal FastAPI
-============================
-
-Este módulo contiene la configuración principal de la aplicación FastAPI
-y la integración de todos los componentes.
+FastAPI Main Application
 """
 
 from fastapi import FastAPI, HTTPException
@@ -19,55 +15,49 @@ from .config import settings, get_upload_path
 from .api.routes import api_router
 from .models import HealthCheck
 
-# Crear la aplicación FastAPI
+# Create FastAPI application
 app = FastAPI(
-    title="Gestor de PDFs",
-    description="Aplicación para gestionar directorios y archivos PDF de forma organizada",
+    title="PDF Manager",
+    description="Application for managing directories and PDF files",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
 
-# Configurar CORS
+# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción, especificar dominios específicos
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Montar archivos estáticos
+# Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Incluir rutas de la API
+# Include API routes
 app.include_router(api_router)
 
-# Variable para tracking de uptime
+# Uptime tracking
 start_time = time.time()
 
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
-    """
-    Página principal de la aplicación.
-    
-    Returns:
-        HTMLResponse: Página HTML del frontend
-    """
+    """Main page of the application."""
     try:
-        # Leer el archivo HTML del frontend
         html_file = Path("static/index.html")
         if html_file.exists():
             with open(html_file, "r", encoding="utf-8") as f:
                 return HTMLResponse(content=f.read())
         else:
-            # Fallback si no existe el archivo HTML
+            # Fallback if HTML file doesn't exist
             return HTMLResponse(content="""
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Gestor de PDFs - API</title>
+                <title>PDF Manager - API</title>
                 <meta charset="utf-8">
                 <style>
                     body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
@@ -80,29 +70,24 @@ async def read_root():
             </head>
             <body>
                 <div class="container">
-                    <h1>📁 Gestor de PDFs - API</h1>
-                    <p style="text-align: center; color: #666;">La aplicación está funcionando correctamente. Usa los siguientes enlaces para acceder a la documentación de la API:</p>
+                    <h1>PDF Manager - API</h1>
+                    <p style="text-align: center; color: #666;">Application is running correctly. Use the following links to access API documentation:</p>
                     <div class="api-links">
-                        <a href="/docs">📖 Documentación Swagger UI</a>
-                        <a href="/redoc">📚 Documentación ReDoc</a>
-                        <a href="/api/v1/health">🏥 Estado de la aplicación</a>
+                        <a href="/docs">Swagger UI Documentation</a>
+                        <a href="/redoc">ReDoc Documentation</a>
+                        <a href="/api/v1/health">Application Status</a>
                     </div>
                 </div>
             </body>
             </html>
             """)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error al cargar la página principal: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error loading main page: {str(e)}")
 
 
 @app.get("/health", response_model=HealthCheck)
 async def health_check():
-    """
-    Verificación de salud de la aplicación (endpoint legacy).
-    
-    Returns:
-        HealthCheck: Estado actual de la aplicación
-    """
+    """Health check endpoint (legacy)."""
     uptime = time.time() - start_time
     return HealthCheck(
         status="healthy",
@@ -113,50 +98,42 @@ async def health_check():
 
 @app.on_event("startup")
 async def startup_event():
-    """
-    Evento que se ejecuta al iniciar la aplicación.
-    
-    Crea los directorios necesarios y realiza configuraciones iniciales.
-    """
+    """Application startup event."""
     try:
-        # Crear directorio de uploads
+        # Create uploads directory
         upload_path = get_upload_path()
-        print(f"✅ Directorio de uploads creado: {upload_path}")
+        print(f"Uploads directory created: {upload_path}")
         
-        # Crear directorio static si no existe
+        # Create static directory if it doesn't exist
         static_path = Path("static")
         static_path.mkdir(exist_ok=True)
-        print(f"✅ Directorio static verificado: {static_path}")
+        print(f"Static directory verified: {static_path}")
         
-        print("🚀 Aplicación iniciada correctamente")
-        print(f"📖 Documentación disponible en: http://{settings.HOST}:{settings.PORT}/docs")
-        print(f"🌐 Frontend disponible en: http://{settings.HOST}:{settings.PORT}/")
+        print("Application started successfully")
+        print(f"Documentation available at: http://{settings.HOST}:{settings.PORT}/docs")
+        print(f"Frontend available at: http://{settings.HOST}:{settings.PORT}/")
         
     except Exception as e:
-        print(f"❌ Error durante el inicio: {str(e)}")
+        print(f"Error during startup: {str(e)}")
         raise
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """
-    Evento que se ejecuta al cerrar la aplicación.
-    """
-    print("🛑 Aplicación cerrada")
+    """Application shutdown event."""
+    print("Application closed")
 
 
-# Manejo de errores personalizado
+# Custom error handler
 @app.exception_handler(404)
 async def not_found_handler(request, exc):
-    """
-    Manejador personalizado para errores 404.
-    """
+    """Custom 404 error handler."""
     return HTMLResponse(
         content="""
         <!DOCTYPE html>
         <html>
         <head>
-            <title>404 - Página no encontrada</title>
+            <title>404 - Page Not Found</title>
             <meta charset="utf-8">
             <style>
                 body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; text-align: center; }
@@ -170,8 +147,8 @@ async def not_found_handler(request, exc):
         <body>
             <div class="container">
                 <h1>404</h1>
-                <p>La página que buscas no existe.</p>
-                <p><a href="/">← Volver al inicio</a></p>
+                <p>The page you're looking for doesn't exist.</p>
+                <p><a href="/">← Back to home</a></p>
             </div>
         </body>
         </html>

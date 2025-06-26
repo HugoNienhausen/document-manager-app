@@ -1,0 +1,11 @@
+# 1. Cargar herramientas
+source scripts/git-helpers.sh
+
+# 2. Ver checklist
+commit_checklist
+
+# 3. Hacer commit inteligente
+smart_commit 'feat' 'mejorar interfaz de directorios' '1.2.0'
+
+# 4. Verificar
+git log --oneline -3
