@@ -12,11 +12,18 @@ Una aplicación web moderna desarrollada con Python y FastAPI para gestionar dir
 - ✅ **Seguridad** - Validación de rutas y sanitización de archivos
 - ✅ **Notificaciones** - Sistema de alertas en tiempo real
 - ✅ **Responsive** - Funciona perfectamente en móviles y tablets
+- ✅ **PostgreSQL Database**: Full database integration with SQLAlchemy ORM
+- ✅ **Document Metadata**: Store and manage document information
+- ✅ **Client Management**: Associate documents with clients
+- ✅ **Category Organization**: Organize documents by categories
+- ✅ **Text Extraction**: Extract and search text from PDFs
+- ✅ **Duplicate Prevention**: Hash-based duplicate detection
 
 ## 📋 Requisitos
 
 - Python 3.7+
 - pip
+- PostgreSQL 12+
 
 ## 🏗️ Estructura del Proyecto
 
@@ -56,6 +63,30 @@ workplace/
 3. **Instalar dependencias:**
    ```bash
    pip install -r requirements.txt
+   ```
+
+4. **Setup PostgreSQL**
+   ```bash
+   # Run the setup script (macOS/Linux)
+   ./scripts/setup_postgres.sh
+   
+   # Or manually:
+   # - Install PostgreSQL
+   # - Create database: CREATE DATABASE pdf_manager;
+   # - Run schema: psql -U postgres -d pdf_manager -f database_schema.sql
+   ```
+
+5. **Configure environment**
+   ```bash
+   # Copy configuration template
+   cp config.env .env
+   
+   # Edit .env with your database credentials
+   ```
+
+6. **Initialize database**
+   ```bash
+   python scripts/init_database.py
    ```
 
 ## 🏃‍♂️ Ejecutar la aplicación

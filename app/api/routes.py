@@ -14,7 +14,7 @@ import time
 import os
 
 from ..services import DirectoryService, FileService
-from ..models import (
+from ..pydantic_models import (
     DirectoryInfo, FileInfo, DirectoryResponse, FileUploadResponse,
     ErrorResponse, HealthCheck
 )
@@ -163,31 +163,6 @@ async def upload_file(
         )
 
 
-@api_router.get("/files/{path:path}", response_model=List[FileInfo])
-async def list_files(path: str):
-    """
-    Lista todos los archivos PDF en un directorio.
-    
-    Args:
-        path (str): Ruta del directorio
-        
-    Returns:
-        List[FileInfo]: Lista de información de archivos
-        
-    Raises:
-        HTTPException: Si hay un error al listar archivos
-    """
-    try:
-        return await file_service.list_files(path)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error interno del servidor: {str(e)}"
-        )
-
-
 @api_router.get("/files/download/{path:path}")
 async def download_file(path: str):
     """
@@ -245,6 +220,31 @@ async def download_file(path: str):
         raise HTTPException(
             status_code=500,
             detail=f"Error interno del servidor al descargar '{path}': {str(e)}"
+        )
+
+
+@api_router.get("/files/{path:path}", response_model=List[FileInfo])
+async def list_files(path: str):
+    """
+    Lista todos los archivos PDF en un directorio.
+    
+    Args:
+        path (str): Ruta del directorio
+        
+    Returns:
+        List[FileInfo]: Lista de información de archivos
+        
+    Raises:
+        HTTPException: Si hay un error al listar archivos
+    """
+    try:
+        return await file_service.list_files(path)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
         )
 
 

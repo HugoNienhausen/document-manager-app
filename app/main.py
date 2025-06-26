@@ -13,7 +13,7 @@ from pathlib import Path
 
 from .config import settings, get_upload_path
 from .api.routes import api_router
-from .models import HealthCheck
+from .pydantic_models import HealthCheck
 
 # Create FastAPI application
 app = FastAPI(

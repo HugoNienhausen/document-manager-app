@@ -19,7 +19,7 @@ class DirectoryCreate(BaseModel):
     Attributes:
         path (str): Ruta del directorio a crear
     """
-    path: str = Field(..., description="Ruta del directorio a crear", example="documentos/trabajo")
+    path: str = Field(..., description="Ruta del directorio a crear")
 
 
 class DirectoryResponse(BaseModel):

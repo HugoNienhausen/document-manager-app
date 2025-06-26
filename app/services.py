@@ -14,9 +14,8 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 from datetime import datetime
 from fastapi import UploadFile, HTTPException
-
 from .config import settings, get_upload_path, validate_file_extension, get_safe_filename
-from .models import DirectoryInfo, FileInfo
+from .pydantic_models import DirectoryInfo, FileInfo
 
 
 class DirectoryService:
@@ -327,7 +326,7 @@ class FileService:
         Obtiene la ruta completa de un archivo.
         
         Args:
-            path (str): Ruta del archivo
+            path (str): Ruta del archivo (ej: "Documentos/archivo.pdf")
             
         Returns:
             Path: Ruta completa del archivo
@@ -337,10 +336,28 @@ class FileService:
         """
         try:
             print(f"🔍 Buscando archivo: {path}")
-            safe_path = self._sanitize_path(path)
-            full_path = self.upload_path / safe_path
             
-            print(f"📁 Ruta sanitizada: {safe_path}")
+            # Separar el directorio del nombre del archivo
+            path_parts = Path(path).parts
+            if len(path_parts) < 2:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Ruta de archivo inválida: debe incluir directorio y nombre de archivo"
+                )
+            
+            # El último elemento es el nombre del archivo
+            filename = path_parts[-1]
+            # El resto es el directorio
+            directory_parts = path_parts[:-1]
+            directory_path = Path(*directory_parts)
+            
+            print(f"📁 Directorio: {directory_path}")
+            print(f"📄 Archivo: {filename}")
+            
+            # Sanitizar el directorio
+            safe_directory = self._sanitize_path(str(directory_path))
+            full_path = self.upload_path / safe_directory / filename
+            
             print(f"📂 Ruta completa: {full_path}")
             print(f"📂 Ruta absoluta: {full_path.absolute()}")
             print(f"📂 Existe: {full_path.exists()}")

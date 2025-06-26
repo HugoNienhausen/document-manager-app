@@ -25,6 +25,14 @@ class Settings(BaseSettings):
     PORT: int = 8000
     DEBUG: bool = True
     
+    # Configuración de base de datos PostgreSQL
+    DATABASE_URL: str = "postgresql://pdf_manager_user:pdf_manager_password@localhost:5432/pdf_manager_db"
+    DB_HOST: str = "localhost"
+    DB_PORT: int = 5432
+    DB_NAME: str = "pdf_manager_db"
+    DB_USER: str = "pdf_manager_user"
+    DB_PASSWORD: str = "pdf_manager_password"
+    
     # Configuración de archivos
     UPLOAD_DIR: str = "uploads"
     MAX_FILE_SIZE: int = 50 * 1024 * 1024  # 50MB
@@ -39,6 +47,11 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+
+    @property
+    def database_url(self) -> str:
+        """Construye la URL de la base de datos desde componentes individuales."""
+        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
 
 # Instancia global de configuración
