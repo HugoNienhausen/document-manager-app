@@ -133,6 +133,11 @@ export class UIService {
 
         // Click en la zona abre el selector de archivos
         dropZone.addEventListener('click', (e) => {
+            // Evitar activar el input si se hace clic en elementos del modal
+            if (e.target.closest('.modal-actions') || e.target.closest('button')) {
+                return;
+            }
+            
             if (e.target !== fileInput) {
                 fileInput.click();
             }
@@ -171,6 +176,14 @@ export class UIService {
         fileInput.addEventListener('click', (e) => {
             e.stopPropagation();
         });
+
+        // Prevenir que los botones activen el input
+        const modalActions = document.querySelector('.modal-actions');
+        if (modalActions) {
+            modalActions.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
     }
 
     /**
