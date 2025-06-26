@@ -201,7 +201,16 @@ class PDFManager {
 
     showFolderModal() {
         document.getElementById('folderModal').style.display = 'block';
-        document.getElementById('dirPath').value = this.currentPath;
+        
+        // Actualizar la información de ubicación
+        const locationSpan = document.getElementById('createLocation');
+        if (this.currentPath) {
+            locationSpan.textContent = this.currentPath;
+        } else {
+            locationSpan.textContent = 'raíz';
+        }
+        
+        document.getElementById('dirPath').value = '';
         document.getElementById('dirPath').focus();
     }
 
@@ -225,25 +234,33 @@ class PDFManager {
     }
 
     async createDirectory() {
-        const path = document.getElementById('dirPath').value.trim();
-        if (!path) {
+        const dirName = document.getElementById('dirPath').value.trim();
+        if (!dirName) {
             this.showNotification('Por favor ingresa un nombre de directorio', 'error');
             return;
         }
 
         try {
+            // Construir la ruta completa del nuevo directorio
+            const fullPath = this.currentPath ? `${this.currentPath}/${dirName}` : dirName;
+            
+            console.log('📁 Creando directorio:', fullPath);
+            console.log('📍 Directorio actual:', this.currentPath || 'raíz');
+            console.log('📝 Nombre del directorio:', dirName);
+
             const formData = new FormData();
-            formData.append('path', path);
+            formData.append('path', fullPath);
 
             await this.apiRequest('/directories', {
                 method: 'POST',
                 body: formData
             });
 
-            this.showNotification('Directorio creado exitosamente', 'success');
+            this.showNotification(`Directorio '${dirName}' creado exitosamente`, 'success');
             this.closeModal('folderModal');
             this.loadExplorer();
         } catch (error) {
+            console.error('❌ Error al crear directorio:', error);
             this.showNotification(error.message, 'error');
         }
     }
