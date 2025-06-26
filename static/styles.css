@@ -491,4 +491,142 @@ body {
 .modal-info span {
     font-weight: 600;
     color: #495057;
+}
+
+.explorer-list {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.explorer-item {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e9ecef;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.explorer-item:hover {
+    background-color: #f8f9fa;
+}
+
+.explorer-item.directory {
+    font-weight: 500;
+}
+
+.explorer-item.file {
+    font-weight: normal;
+    color: #6c757d;
+}
+
+.directory-header {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 8px;
+}
+
+.directory-toggle {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    color: #6c757d;
+}
+
+.directory-toggle.expanded {
+    transform: rotate(90deg);
+}
+
+.directory-toggle i {
+    font-size: 12px;
+}
+
+.directory-icon {
+    color: #ffc107;
+    width: 20px;
+    text-align: center;
+}
+
+.file-icon {
+    color: #dc3545;
+    width: 20px;
+    text-align: center;
+}
+
+.item-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.item-actions {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.explorer-item:hover .item-actions {
+    opacity: 1;
+}
+
+.action-icon {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    border-radius: 4px;
+    color: #6c757d;
+    transition: all 0.2s ease;
+}
+
+.action-icon:hover {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.action-icon.delete:hover {
+    background-color: #f8d7da;
+    color: #dc3545;
+}
+
+.directory-content {
+    display: none;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+    margin-top: 4px;
+    padding: 8px 0;
+}
+
+.directory-content.expanded {
+    display: block;
+}
+
+.directory-content .explorer-item {
+    padding-left: 12px;
+    border-bottom: none;
+    position: relative;
+}
+
+.directory-content .explorer-item::before {
+    display: none;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #6c757d;
 } 

@@ -371,61 +371,84 @@ class PDFManager {
     }
 
     renderExplorer(directories, files) {
-        const dirList = document.getElementById('directoryList');
-        const fileList = document.getElementById('fileList');
+        const explorerList = document.getElementById('explorerList');
 
         // Actualizar breadcrumb dinámico
         this.updateBreadcrumb();
 
         // Agregar directorio ".." si no estamos en la raíz
-        let dirItems = [];
+        let explorerHTML = '';
         if (this.currentPath) {
-            dirItems.push(`
-                <div class="list-item parent-dir" onclick="pdfManager.navigateToParent()">
-                    <i class="fas fa-level-up-alt"></i>
-                    <span class="name">..</span>
+            explorerHTML += `
+                <div class="explorer-item parent-dir" onclick="pdfManager.navigateToParent()">
+                    <div class="directory-header">
+                        <div class="directory-icon">
+                            <i class="fas fa-level-up-alt"></i>
+                        </div>
+                        <span class="item-name">..</span>
+                    </div>
                 </div>
-            `);
+            `;
         }
 
-        // Renderizar directorios
+        // Renderizar directorios con funcionalidad expandible
         if (directories.length === 0 && !this.currentPath) {
-            dirList.innerHTML = '<div class="empty-state">No hay directorios</div>';
+            explorerHTML += '<div class="empty-state">No hay directorios</div>';
         } else {
-            const dirElements = directories.map(dir => `
-                <div class="list-item" onclick="pdfManager.navigateTo('${dir}')">
-                    <i class="fas fa-folder"></i>
-                    <span class="name">${dir}</span>
-                    <div class="actions">
-                        <button class="action-icon delete" onclick="event.stopPropagation(); pdfManager.deleteDirectory('${dir}')" title="Eliminar">
-                            <i class="fas fa-trash"></i>
-                        </button>
+            directories.forEach(dir => {
+                const dirName = dir.split('/').pop();
+                explorerHTML += `
+                    <div class="explorer-item directory" data-path="${dir}">
+                        <div class="directory-header">
+                            <div class="directory-toggle" onclick="event.stopPropagation(); pdfManager.toggleDirectory('${dir}')">
+                                <i class="fas fa-chevron-right"></i>
+                            </div>
+                            <div class="directory-icon">
+                                <i class="fas fa-folder"></i>
+                            </div>
+                            <span class="item-name" onclick="pdfManager.navigateTo('${dir}')">${dirName}</span>
+                            <div class="item-actions">
+                                <button class="action-icon delete" onclick="event.stopPropagation(); pdfManager.deleteDirectory('${dir}')" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="directory-content" id="content-${dir.replace(/[^a-zA-Z0-9]/g, '-')}">
+                            <div class="loading">Cargando...</div>
+                        </div>
                     </div>
-                </div>
-            `).join('');
-            
-            dirList.innerHTML = dirItems.join('') + dirElements;
+                `;
+            });
         }
 
-        // Renderizar archivos con indentación
-        if (files.length === 0) {
-            fileList.innerHTML = '<div class="empty-state">No hay archivos PDF</div>';
-        } else {
-            fileList.innerHTML = files.map(file => `
-                <div class="list-item file-item">
-                    <i class="fas fa-file-pdf"></i>
-                    <span class="name">${file.name}</span>
-                    <div class="actions">
-                        <button class="action-icon" onclick="pdfManager.downloadFile('${file.path}')" title="Descargar">
-                            <i class="fas fa-download"></i>
-                        </button>
-                        <button class="action-icon delete" onclick="pdfManager.deleteFile('${file.path}')" title="Eliminar">
-                            <i class="fas fa-trash"></i>
-                        </button>
+        // Renderizar archivos del directorio actual
+        if (files.length > 0) {
+            files.forEach(file => {
+                explorerHTML += `
+                    <div class="explorer-item file">
+                        <div class="directory-header">
+                            <div class="directory-icon"></div>
+                            <div class="file-icon">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <span class="item-name">${file.name}</span>
+                            <div class="item-actions">
+                                <button class="action-icon" onclick="pdfManager.downloadFile('${file.path}')" title="Descargar">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button class="action-icon delete" onclick="pdfManager.deleteFile('${file.path}')" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            });
+        } else if (!this.currentPath && directories.length === 0) {
+            explorerHTML += '<div class="empty-state">No hay archivos PDF</div>';
         }
+
+        explorerList.innerHTML = explorerHTML;
     }
 
     updateBreadcrumb() {
@@ -560,6 +583,99 @@ class PDFManager {
         pathParts.pop(); // Remover el último directorio
         this.currentPath = pathParts.join('/');
         this.loadExplorer();
+    }
+
+    async toggleDirectory(path) {
+        const dirElement = document.querySelector(`[data-path="${path}"]`);
+        const toggle = dirElement.querySelector('.directory-toggle');
+        const content = dirElement.querySelector('.directory-content');
+        
+        if (content.classList.contains('expanded')) {
+            // Contraer directorio
+            content.classList.remove('expanded');
+            toggle.classList.remove('expanded');
+        } else {
+            // Expandir directorio
+            try {
+                // Cargar contenido del directorio
+                const [subDirectories, files] = await Promise.all([
+                    this.apiRequest('/directories'),
+                    this.apiRequest(`/files/${encodeURIComponent(path)}`)
+                ]);
+
+                // Filtrar subdirectorios que pertenecen a este directorio
+                const pathPrefix = path + '/';
+                const relevantDirs = subDirectories.filter(dir => {
+                    if (!dir.startsWith(pathPrefix)) return false;
+                    const relativePath = dir.substring(pathPrefix.length);
+                    return !relativePath.includes('/');
+                });
+
+                // Renderizar contenido del directorio
+                let contentHTML = '';
+                
+                if (relevantDirs.length === 0 && files.length === 0) {
+                    contentHTML = '<div class="empty-state">Directorio vacío</div>';
+                } else {
+                    // Renderizar subdirectorios
+                    relevantDirs.forEach(dir => {
+                        const dirName = dir.split('/').pop();
+                        contentHTML += `
+                            <div class="explorer-item directory" data-path="${dir}">
+                                <div class="directory-header">
+                                    <div class="directory-toggle" onclick="event.stopPropagation(); pdfManager.toggleDirectory('${dir}')">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </div>
+                                    <div class="directory-icon">
+                                        <i class="fas fa-folder"></i>
+                                    </div>
+                                    <span class="item-name" onclick="pdfManager.navigateTo('${dir}')">${dirName}</span>
+                                    <div class="item-actions">
+                                        <button class="action-icon delete" onclick="event.stopPropagation(); pdfManager.deleteDirectory('${dir}')" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="directory-content" id="content-${dir.replace(/[^a-zA-Z0-9]/g, '-')}">
+                                    <div class="loading">Cargando...</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    // Renderizar archivos
+                    files.forEach(file => {
+                        contentHTML += `
+                            <div class="explorer-item file">
+                                <div class="directory-header">
+                                    <div class="directory-icon"></div>
+                                    <div class="file-icon">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </div>
+                                    <span class="item-name">${file.name}</span>
+                                    <div class="item-actions">
+                                        <button class="action-icon" onclick="pdfManager.downloadFile('${file.path}')" title="Descargar">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                        <button class="action-icon delete" onclick="pdfManager.deleteFile('${file.path}')" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                content.innerHTML = contentHTML;
+                content.classList.add('expanded');
+                toggle.classList.add('expanded');
+                
+            } catch (error) {
+                console.error('Error al cargar contenido del directorio:', error);
+                this.showNotification('Error al cargar contenido del directorio', 'error');
+            }
+        }
     }
 }
 
