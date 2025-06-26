@@ -11,6 +11,7 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends
 from fastapi.responses import FileResponse
 from typing import List
 import time
+import os
 
 from ..services import DirectoryService, FileService
 from ..models import (
@@ -126,14 +127,14 @@ async def get_directory_info(path: str):
 @api_router.post("/files/upload", response_model=FileUploadResponse)
 async def upload_file(
     file: UploadFile = File(..., description="Archivo PDF a subir"),
-    path: str = Form(..., description="Directorio destino")
+    path: str = Form("", description="Directorio destino")
 ):
     """
     Sube un archivo PDF a un directorio específico.
     
     Args:
         file (UploadFile): Archivo PDF a subir
-        path (str): Ruta del directorio destino
+        path (str): Ruta del directorio destino (opcional, por defecto raíz)
         
     Returns:
         FileUploadResponse: Información del archivo subido
@@ -142,9 +143,12 @@ async def upload_file(
         HTTPException: Si hay un error al subir el archivo
     """
     try:
-        file_info = await file_service.upload_file(file, path)
+        # Si path está vacío, usar la raíz
+        upload_path = path.strip() if path else ""
+        
+        file_info = await file_service.upload_file(file, upload_path)
         return FileUploadResponse(
-            message=f"PDF '{file_info.name}' subido exitosamente a '{path}'",
+            message=f"PDF '{file_info.name}' subido exitosamente a '{upload_path or 'raíz'}'",
             filename=file_info.name,
             path=file_info.path,
             size=file_info.size,
@@ -199,18 +203,48 @@ async def download_file(path: str):
         HTTPException: Si el archivo no existe o hay un error
     """
     try:
+        print(f"🔍 Intentando descargar archivo: {path}")
         file_path = await file_service.get_file_path(path)
+        
+        # Verificar que el archivo existe y es accesible
+        if not file_path.exists():
+            raise HTTPException(
+                status_code=404,
+                detail=f"Archivo '{path}' no encontrado en el servidor"
+            )
+        
+        if not file_path.is_file():
+            raise HTTPException(
+                status_code=400,
+                detail=f"'{path}' no es un archivo válido"
+            )
+        
+        # Verificar que el archivo es legible
+        if not os.access(file_path, os.R_OK):
+            raise HTTPException(
+                status_code=403,
+                detail=f"No tienes permisos para leer el archivo '{path}'"
+            )
+        
+        print(f"✅ Archivo encontrado: {file_path}")
+        print(f"📏 Tamaño: {file_path.stat().st_size} bytes")
+        
         return FileResponse(
             path=str(file_path),
             filename=file_path.name,
-            media_type="application/pdf"
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename=\"{file_path.name}\"",
+                "Cache-Control": "no-cache"
+            }
         )
     except HTTPException:
         raise
     except Exception as e:
+        print(f"❌ Error al descargar archivo '{path}': {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error interno del servidor: {str(e)}"
+            detail=f"Error interno del servidor al descargar '{path}': {str(e)}"
         )
 
 

@@ -22,6 +22,7 @@ class PDFManager {
         });
 
         document.getElementById('uploadForm').addEventListener('submit', (e) => {
+            console.log('📝 Evento submit del formulario de subida capturado');
             e.preventDefault();
             this.uploadFile();
         });
@@ -35,8 +36,11 @@ class PDFManager {
         const fileInput = document.getElementById('pdfFile');
 
         // Hacer clic en el área de arrastrar archivos abre el selector
-        dropZone.addEventListener('click', () => {
-            fileInput.click();
+        dropZone.addEventListener('click', (e) => {
+            // Evitar que se active si se hace clic en el input file
+            if (e.target !== fileInput) {
+                fileInput.click();
+            }
         });
 
         dropZone.addEventListener('dragover', (e) => {
@@ -63,18 +67,71 @@ class PDFManager {
                 this.updateFileLabel(e.target.files[0].name);
             }
         });
+
+        // Prevenir que el clic en el input file se propague
+        fileInput.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
     }
 
     updateFileLabel(filename) {
         const dropZone = document.getElementById('fileDropZone');
-        dropZone.innerHTML = `
-            <i class="fas fa-file-pdf"></i>
-            <p>${filename}</p>
-        `;
+        const fileInput = document.getElementById('pdfFile');
+        
+        // Actualizar solo la información visual, manteniendo el input file
+        const icon = dropZone.querySelector('i');
+        const text = dropZone.querySelector('p');
+        
+        if (icon) {
+            icon.className = 'fas fa-file-pdf';
+        }
+        
+        if (text) {
+            text.textContent = filename;
+        } else {
+            // Si no existe el texto, crear uno nuevo
+            const newText = document.createElement('p');
+            newText.textContent = filename;
+            dropZone.appendChild(newText);
+        }
+        
+        // Asegurar que el input file esté presente y funcional
+        if (!dropZone.querySelector('#pdfFile')) {
+            const newFileInput = document.createElement('input');
+            newFileInput.type = 'file';
+            newFileInput.id = 'pdfFile';
+            newFileInput.name = 'file';
+            newFileInput.accept = '.pdf';
+            newFileInput.style.display = 'none';
+            
+            // Restaurar el archivo seleccionado
+            if (fileInput && fileInput.files.length > 0) {
+                const dt = new DataTransfer();
+                dt.items.add(fileInput.files[0]);
+                newFileInput.files = dt.files;
+            }
+            
+            dropZone.appendChild(newFileInput);
+            
+            // Reconfigurar el evento change
+            newFileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    this.updateFileLabel(e.target.files[0].name);
+                }
+            });
+            
+            // Prevenir propagación del clic
+            newFileInput.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
     }
 
     async apiRequest(endpoint, options = {}) {
         try {
+            console.log(`🌐 Haciendo petición a: /api/v1${endpoint}`);
+            console.log('📋 Opciones:', options);
+            
             const response = await fetch(`/api/v1${endpoint}`, {
                 headers: {
                     'Accept': 'application/json',
@@ -83,14 +140,43 @@ class PDFManager {
                 ...options
             });
 
+            console.log(`📡 Respuesta recibida: ${response.status} ${response.statusText}`);
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.detail || `Error ${response.status}`);
+                console.error('❌ Error en la respuesta:', errorData);
+                
+                // Para errores 422, mostrar detalles específicos
+                if (response.status === 422) {
+                    if (errorData.detail && Array.isArray(errorData.detail)) {
+                        const errorMessages = errorData.detail.map(err => 
+                            `${err.loc?.join('.')}: ${err.msg}`
+                        ).join(', ');
+                        throw new Error(`Error de validación: ${errorMessages}`);
+                    } else if (errorData.detail) {
+                        throw new Error(`Error de validación: ${errorData.detail}`);
+                    }
+                }
+                
+                throw new Error(errorData.detail || `Error ${response.status}: ${response.statusText}`);
             }
 
-            return await response.json();
+            // Solo intentar parsear como JSON si el content-type es application/json
+            const contentType = response.headers.get('content-type');
+            console.log('📄 Content-Type:', contentType);
+            
+            if (contentType && contentType.includes('application/json')) {
+                const jsonResult = await response.json();
+                console.log('📄 Respuesta JSON:', jsonResult);
+                return jsonResult;
+            } else {
+                // Para respuestas que no son JSON (como subida de archivos)
+                const textResult = await response.text();
+                console.log('📄 Respuesta texto:', textResult);
+                return textResult;
+            }
         } catch (error) {
-            console.error('API Error:', error);
+            console.error('❌ Error en apiRequest:', error);
             throw error;
         }
     }
@@ -121,10 +207,17 @@ class PDFManager {
 
     showUploadModal() {
         document.getElementById('uploadModal').style.display = 'block';
-        document.getElementById('fileDropZone').innerHTML = `
+        
+        // Limpiar el contenido anterior
+        const dropZone = document.getElementById('fileDropZone');
+        dropZone.innerHTML = `
             <i class="fas fa-cloud-upload-alt"></i>
             <p>Arrastra un archivo PDF aquí o haz clic para seleccionar</p>
+            <input type="file" id="pdfFile" name="file" accept=".pdf">
         `;
+        
+        // Reconfigurar el drag and drop después de recrear el contenido
+        this.setupDragAndDrop();
     }
 
     closeModal(modalId) {
@@ -156,28 +249,70 @@ class PDFManager {
     }
 
     async uploadFile() {
+        console.log('🔍 Iniciando subida de archivo...');
+        
         const fileInput = document.getElementById('pdfFile');
+        console.log('📄 Input file encontrado:', fileInput);
+        
+        if (!fileInput) {
+            console.error('❌ No se encontró el input file');
+            this.showNotification('Error: No se pudo acceder al selector de archivos', 'error');
+            return;
+        }
+        
         const file = fileInput.files[0];
+        console.log('📄 Archivo seleccionado:', file);
 
         if (!file) {
+            console.log('❌ No hay archivo seleccionado');
             this.showNotification('Por favor selecciona un archivo PDF', 'error');
             return;
         }
 
+        // Validar que es un archivo PDF
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            console.log('❌ El archivo no es un PDF');
+            this.showNotification('Por favor selecciona solo archivos PDF', 'error');
+            return;
+        }
+
+        // Validar tamaño del archivo (máximo 50MB)
+        const maxSize = 50 * 1024 * 1024; // 50MB
+        if (file.size > maxSize) {
+            console.log('❌ El archivo es demasiado grande');
+            this.showNotification('El archivo es demasiado grande. Máximo 50MB', 'error');
+            return;
+        }
+
         try {
+            console.log('📤 Preparando FormData...');
             const formData = new FormData();
             formData.append('file', file);
             formData.append('path', this.currentPath || '');
+            
+            console.log('📁 Ruta actual:', this.currentPath);
+            console.log('📄 Nombre del archivo:', file.name);
+            console.log('📏 Tamaño del archivo:', file.size);
+            console.log('📄 Tipo MIME del archivo:', file.type);
+            
+            // Verificar contenido del FormData
+            console.log('📋 Contenido del FormData:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`  ${key}:`, value);
+            }
 
-            await this.apiRequest('/files/upload', {
+            console.log('🚀 Enviando archivo al servidor...');
+            const result = await this.apiRequest('/files/upload', {
                 method: 'POST',
                 body: formData
             });
 
+            console.log('✅ Respuesta del servidor:', result);
             this.showNotification('Archivo subido exitosamente', 'success');
             this.closeModal('uploadModal');
             this.loadExplorer();
         } catch (error) {
+            console.error('❌ Error en la subida:', error);
             this.showNotification(error.message, 'error');
         }
     }
@@ -321,10 +456,27 @@ class PDFManager {
 
     async downloadFile(path) {
         try {
-            window.open(`/api/v1/files/download/${encodeURIComponent(path)}`, '_blank');
+            console.log(`🔍 Intentando descargar: ${path}`);
+            
+            // Crear un enlace temporal para la descarga
+            const link = document.createElement('a');
+            link.href = `/api/v1/files/download/${encodeURIComponent(path)}`;
+            link.download = path.split('/').pop(); // Obtener solo el nombre del archivo
+            link.target = '_blank';
+            
+            // Añadir el enlace al DOM temporalmente
+            document.body.appendChild(link);
+            
+            // Hacer clic en el enlace
+            link.click();
+            
+            // Remover el enlace del DOM
+            document.body.removeChild(link);
+            
             this.showNotification('Descarga iniciada', 'success');
         } catch (error) {
-            this.showNotification('Error al descargar', 'error');
+            console.error('Error al descargar:', error);
+            this.showNotification(`Error al descargar: ${error.message}`, 'error');
         }
     }
 

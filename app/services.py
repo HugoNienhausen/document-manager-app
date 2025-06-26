@@ -336,26 +336,36 @@ class FileService:
             HTTPException: Si el archivo no existe
         """
         try:
+            print(f"🔍 Buscando archivo: {path}")
             safe_path = self._sanitize_path(path)
             full_path = self.upload_path / safe_path
             
+            print(f"📁 Ruta sanitizada: {safe_path}")
+            print(f"📂 Ruta completa: {full_path}")
+            print(f"📂 Ruta absoluta: {full_path.absolute()}")
+            print(f"📂 Existe: {full_path.exists()}")
+            
             if not full_path.exists():
+                print(f"❌ Archivo no encontrado: {full_path}")
                 raise HTTPException(
                     status_code=404,
                     detail=f"Archivo '{path}' no encontrado"
                 )
             
             if not full_path.is_file():
+                print(f"❌ No es un archivo: {full_path}")
                 raise HTTPException(
                     status_code=400,
                     detail=f"'{path}' no es un archivo"
                 )
             
+            print(f"✅ Archivo encontrado: {full_path}")
             return full_path
             
         except HTTPException:
             raise
         except Exception as e:
+            print(f"❌ Error al obtener archivo '{path}': {str(e)}")
             raise HTTPException(
                 status_code=400,
                 detail=f"Error al obtener archivo: {str(e)}"
