@@ -250,7 +250,15 @@ export class RendererService {
      */
     showLoadingState(message = 'Cargando...') {
         if (this.explorerList) {
-            this.explorerList.innerHTML = `<div class="loading">${message}</div>`;
+            // Limpiar cualquier contenido anterior
+            this.explorerList.innerHTML = '';
+            
+            // Crear elemento de carga
+            const loadingElement = document.createElement('div');
+            loadingElement.className = 'loading';
+            loadingElement.textContent = message;
+            
+            this.explorerList.appendChild(loadingElement);
         }
     }
 

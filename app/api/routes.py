@@ -17,7 +17,9 @@ from ..services import DirectoryService, FileService, DocumentService
 from ..pydantic_models import (
     DirectoryInfo, FileInfo, DirectoryResponse, FileUploadResponse,
     ErrorResponse, HealthCheck, DocumentUploadResponse, DocumentResponse,
-    DocumentTypeResponse, ClientResponse, CategoryResponse
+    DocumentTypeResponse, ClientResponse, CategoryResponse,
+    DocumentTypeCreate, DocumentTypeUpdate, CategoryCreate, CategoryUpdate,
+    ClientCreate, ClientUpdate
 )
 from ..config import settings
 
@@ -509,6 +511,218 @@ async def delete_document(path: str):
     try:
         return await document_service.delete_document(path)
         
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+
+# ============================================================================
+# RUTAS CRUD PARA METADATOS
+# ============================================================================
+
+# Document Types CRUD
+@api_router.post("/metadata/document-types", response_model=DocumentTypeResponse)
+async def create_document_type(document_type: DocumentTypeCreate):
+    """
+    Crea un nuevo tipo de documento.
+    
+    Args:
+        document_type (DocumentTypeCreate): Datos del tipo de documento
+        
+    Returns:
+        DocumentTypeResponse: Tipo de documento creado
+    """
+    try:
+        return await document_service.create_document_type(document_type)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+@api_router.put("/metadata/document-types/{type_id}", response_model=DocumentTypeResponse)
+async def update_document_type(type_id: int, document_type: DocumentTypeUpdate):
+    """
+    Actualiza un tipo de documento existente.
+    
+    Args:
+        type_id (int): ID del tipo de documento
+        document_type (DocumentTypeUpdate): Datos actualizados
+        
+    Returns:
+        DocumentTypeResponse: Tipo de documento actualizado
+    """
+    try:
+        return await document_service.update_document_type(type_id, document_type)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+@api_router.delete("/metadata/document-types/{type_id}")
+async def delete_document_type(type_id: int):
+    """
+    Elimina un tipo de documento.
+    
+    Args:
+        type_id (int): ID del tipo de documento
+        
+    Returns:
+        dict: Mensaje de confirmación
+    """
+    try:
+        await document_service.delete_document_type(type_id)
+        return {
+            "message": f"Tipo de documento con ID {type_id} eliminado exitosamente",
+            "deleted_at": time.time()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+# Categories CRUD
+@api_router.post("/metadata/categories", response_model=CategoryResponse)
+async def create_category(category: CategoryCreate):
+    """
+    Crea una nueva categoría.
+    
+    Args:
+        category (CategoryCreate): Datos de la categoría
+        
+    Returns:
+        CategoryResponse: Categoría creada
+    """
+    try:
+        return await document_service.create_category(category)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+@api_router.put("/metadata/categories/{category_id}", response_model=CategoryResponse)
+async def update_category(category_id: int, category: CategoryUpdate):
+    """
+    Actualiza una categoría existente.
+    
+    Args:
+        category_id (int): ID de la categoría
+        category (CategoryUpdate): Datos actualizados
+        
+    Returns:
+        CategoryResponse: Categoría actualizada
+    """
+    try:
+        return await document_service.update_category(category_id, category)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+@api_router.delete("/metadata/categories/{category_id}")
+async def delete_category(category_id: int):
+    """
+    Elimina una categoría.
+    
+    Args:
+        category_id (int): ID de la categoría
+        
+    Returns:
+        dict: Mensaje de confirmación
+    """
+    try:
+        await document_service.delete_category(category_id)
+        return {
+            "message": f"Categoría con ID {category_id} eliminada exitosamente",
+            "deleted_at": time.time()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+# Clients CRUD
+@api_router.post("/metadata/clients", response_model=ClientResponse)
+async def create_client(client: ClientCreate):
+    """
+    Crea un nuevo cliente.
+    
+    Args:
+        client (ClientCreate): Datos del cliente
+        
+    Returns:
+        ClientResponse: Cliente creado
+    """
+    try:
+        return await document_service.create_client(client)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+@api_router.put("/metadata/clients/{client_id}", response_model=ClientResponse)
+async def update_client(client_id: int, client: ClientUpdate):
+    """
+    Actualiza un cliente existente.
+    
+    Args:
+        client_id (int): ID del cliente
+        client (ClientUpdate): Datos actualizados
+        
+    Returns:
+        ClientResponse: Cliente actualizado
+    """
+    try:
+        return await document_service.update_client(client_id, client)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+@api_router.delete("/metadata/clients/{client_id}")
+async def delete_client(client_id: int):
+    """
+    Elimina un cliente.
+    
+    Args:
+        client_id (int): ID del cliente
+        
+    Returns:
+        dict: Mensaje de confirmación
+    """
+    try:
+        await document_service.delete_client(client_id)
+        return {
+            "message": f"Cliente con ID {client_id} eliminado exitosamente",
+            "deleted_at": time.time()
+        }
     except HTTPException:
         raise
     except Exception as e:

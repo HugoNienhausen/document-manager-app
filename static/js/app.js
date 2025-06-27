@@ -10,6 +10,8 @@ import { uiService } from './modules/ui.js';
 import { rendererService } from './modules/renderer.js';
 import { fileManagerService } from './modules/fileManager.js';
 import { documentManagerService } from './modules/documentManager.js';
+import { notificationService } from './modules/notifications.js';
+import { settingsManager } from './modules/settingsManager.js';
 
 class PDFManager {
     constructor() {
@@ -66,7 +68,24 @@ class PDFManager {
      * Cierra un modal
      */
     closeModal(modalId) {
-        uiService.closeModal(modalId);
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+            
+            // Limpiar formularios
+            const forms = modal.querySelectorAll('form');
+            forms.forEach(form => form.reset());
+            
+            // Limpiar archivos seleccionados
+            const fileInputs = modal.querySelectorAll('input[type="file"]');
+            fileInputs.forEach(input => {
+                input.value = '';
+            });
+        }
+    }
+
+    closeMetadataModal() {
+        settingsManager.closeMetadataModal();
     }
 
     /**
@@ -173,8 +192,22 @@ class PDFManager {
 
 // Inicializar la aplicación cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
-    // Crear instancia global
-    window.pdfManager = new PDFManager();
+    console.log('DOM cargado, inicializando PDF Manager...');
     
-    console.log('PDF Manager inicializado con módulos');
+    try {
+        // Crear instancia global
+        window.pdfManager = new PDFManager();
+        
+        console.log('PDF Manager inicializado con módulos');
+        console.log('Módulos disponibles:', {
+            apiService: !!window.apiService,
+            fileManagerService: !!window.fileManagerService,
+            rendererService: !!window.rendererService,
+            uiService: !!window.uiService,
+            notificationService: !!window.notificationService,
+            settingsManager: !!window.settingsManager
+        });
+    } catch (error) {
+        console.error('Error al inicializar PDF Manager:', error);
+    }
 }); 
