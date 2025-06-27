@@ -1,282 +1,201 @@
-# 📁 Gestor de PDFs con FastAPI
+# Document Manager App
 
-Una aplicación web moderna desarrollada con Python y FastAPI para gestionar directorios y archivos PDF de forma organizada y eficiente.
+Una aplicación web moderna para la gestión de documentos PDF con metadatos, construida con FastAPI y JavaScript modular.
 
 ## 🚀 Características
 
-- ✅ **Arquitectura modular** - Backend y frontend completamente separados
-- ✅ **API REST completa** - Documentación automática con Swagger/ReDoc
-- ✅ **Interfaz moderna** - Frontend responsive con diseño actual
-- ✅ **Gestión de directorios** - Crear, listar y eliminar directorios anidados
-- ✅ **Subida de archivos** - Drag & drop y validación de archivos PDF
-- ✅ **Seguridad** - Validación de rutas y sanitización de archivos
-- ✅ **Notificaciones** - Sistema de alertas en tiempo real
-- ✅ **Responsive** - Funciona perfectamente en móviles y tablets
-- ✅ **PostgreSQL Database**: Full database integration with SQLAlchemy ORM
-- ✅ **Document Metadata**: Store and manage document information
-- ✅ **Client Management**: Associate documents with clients
-- ✅ **Category Organization**: Organize documents by categories
-- ✅ **Text Extraction**: Extract and search text from PDFs
-- ✅ **Duplicate Prevention**: Hash-based duplicate detection
+- **Gestión de directorios**: Crear, navegar y eliminar directorios
+- **Subida de documentos**: Subir archivos PDF con metadatos completos
+- **Base de datos PostgreSQL**: Almacenamiento persistente con SQLAlchemy
+- **Interfaz modular**: Frontend JavaScript organizado en módulos
+- **API RESTful**: Backend FastAPI con documentación automática
+- **Validación de archivos**: Verificación de tipos y tamaños
+- **Sistema de metadatos**: Categorización por tipo, cliente y categoría
+- **Hash de archivos**: Detección de duplicados por contenido
 
-## 📋 Requisitos
+## 🛠️ Tecnologías
 
-- Python 3.7+
-- pip
-- PostgreSQL 12+
+### Backend
+- **FastAPI**: Framework web moderno y rápido
+- **PostgreSQL**: Base de datos relacional
+- **SQLAlchemy**: ORM para Python
+- **Pydantic**: Validación de datos
+- **Uvicorn**: Servidor ASGI
 
-## 🏗️ Estructura del Proyecto
+### Frontend
+- **JavaScript ES6+**: Código modular y moderno
+- **CSS3**: Estilos responsivos y modernos
+- **HTML5**: Estructura semántica
 
-```
-workplace/
-├── app/                          # Backend (FastAPI)
-│   ├── __init__.py              # Paquete principal
-│   ├── main.py                  # Aplicación principal
-│   ├── config.py                # Configuraciones
-│   ├── models.py                # Modelos Pydantic
-│   ├── services.py              # Lógica de negocio
-│   └── api/                     # Rutas de la API
-│       ├── __init__.py
-│       └── routes.py
-├── static/                       # Frontend
-│   ├── index.html               # Página principal
-│   ├── styles.css               # Estilos CSS
-│   └── app.js                   # JavaScript
-├── uploads/                      # Archivos subidos (se crea automáticamente)
-├── main.py                       # Punto de entrada
-├── requirements.txt              # Dependencias
-├── README.md                     # Este archivo
-└── venv/                         # Entorno virtual
+## 📦 Instalación
+
+### Prerrequisitos
+- Python 3.11+
+- PostgreSQL
+- Node.js (opcional, para desarrollo)
+
+### 1. Clonar el repositorio
+```bash
+git clone https://github.com/HugoNienhausen/document-manager-app.git
+cd document-manager-app
 ```
 
-## 🛠️ Instalación
+### 2. Configurar entorno virtual
+```bash
+python -m venv venv
+source venv/bin/activate  # En Windows: venv\Scripts\activate
+```
 
-1. **Clonar o descargar el proyecto**
+### 3. Instalar dependencias
+```bash
+pip install -r requirements.txt
+```
 
-2. **Activar el entorno virtual:**
-   ```bash
-   source venv/bin/activate  # En macOS/Linux
-   # o
-   venv\Scripts\activate     # En Windows
-   ```
+### 4. Configurar base de datos
+```bash
+# Crear base de datos PostgreSQL
+createdb document_manager
 
-3. **Instalar dependencias:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+# Configurar variables de entorno
+cp config.env.example config.env
+# Editar config.env con tus credenciales de base de datos
+```
 
-4. **Setup PostgreSQL**
-   ```bash
-   # Run the setup script (macOS/Linux)
-   ./scripts/setup_postgres.sh
-   
-   # Or manually:
-   # - Install PostgreSQL
-   # - Create database: CREATE DATABASE pdf_manager;
-   # - Run schema: psql -U postgres -d pdf_manager -f database_schema.sql
-   ```
+### 5. Inicializar base de datos
+```bash
+python scripts/init_database.py
+```
 
-5. **Configure environment**
-   ```bash
-   # Copy configuration template
-   cp config.env .env
-   
-   # Edit .env with your database credentials
-   ```
-
-6. **Initialize database**
-   ```bash
-   python scripts/init_database.py
-   ```
-
-## 🏃‍♂️ Ejecutar la aplicación
-
-### Opción 1: Usando el script principal
+### 6. Ejecutar la aplicación
 ```bash
 python main.py
 ```
 
-### Opción 2: Usando uvicorn directamente
-```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+La aplicación estará disponible en:
+- **Frontend**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
+## 📁 Estructura del proyecto
+
 ```
-
-### Opción 3: Usando el módulo app
-```bash
-python -m app.main
-```
-
-La aplicación estará disponible en: **http://localhost:8000**
-
-## 📖 Uso
-
-### Interfaz Web
-
-1. **Crear Directorio:** Ingresa la ruta del directorio (ej: `documentos/trabajo/2024`)
-2. **Subir PDF:** Selecciona un archivo PDF y especifica el directorio destino
-3. **Explorar:** Ve la lista de directorios disponibles con opciones de gestión
-4. **Listar Archivos:** Ve los PDFs en cada directorio con información detallada
-5. **Descargar/Eliminar:** Acciones directas sobre archivos y directorios
-
-### API REST
-
-#### Endpoints principales:
-
-- `GET /` - Página principal del frontend
-- `GET /docs` - Documentación Swagger UI
-- `GET /redoc` - Documentación ReDoc
-- `GET /api/v1/health` - Estado de la aplicación
-
-#### Gestión de directorios:
-```bash
-POST /api/v1/directories          # Crear directorio
-GET /api/v1/directories           # Listar directorios
-GET /api/v1/directories/{path}    # Info de directorio
-DELETE /api/v1/directories/{path} # Eliminar directorio
-```
-
-#### Gestión de archivos:
-```bash
-POST /api/v1/files/upload         # Subir archivo PDF
-GET /api/v1/files/{path}          # Listar archivos
-GET /api/v1/files/download/{path} # Descargar archivo
-DELETE /api/v1/files/{path}       # Eliminar archivo
+document-manager-app/
+├── app/                    # Backend FastAPI
+│   ├── api/               # Rutas de la API
+│   ├── models/            # Modelos SQLAlchemy
+│   ├── config.py          # Configuración
+│   ├── database.py        # Conexión a base de datos
+│   ├── main.py           # Aplicación principal
+│   ├── pydantic_models.py # Modelos Pydantic
+│   └── services.py       # Lógica de negocio
+├── static/                # Frontend
+│   ├── css/              # Estilos CSS
+│   ├── js/               # JavaScript modular
+│   │   └── modules/      # Módulos JS
+│   └── index.html        # Página principal
+├── scripts/              # Scripts de utilidad
+├── uploads/              # Archivos subidos
+├── docs/                 # Documentación
+└── requirements.txt      # Dependencias Python
 ```
 
 ## 🔧 Configuración
 
-### Variables de entorno (opcional)
-
-Crea un archivo `.env` en la raíz del proyecto:
+### Variables de entorno
+Crea un archivo `config.env` con las siguientes variables:
 
 ```env
-# Servidor
-HOST=0.0.0.0
-PORT=8000
-DEBUG=true
-
-# Archivos
-UPLOAD_DIR=uploads
-MAX_FILE_SIZE=52428800  # 50MB en bytes
-ALLOWED_EXTENSIONS=[".pdf"]
-
-# Seguridad
-SECRET_KEY=tu-clave-secreta-aqui-cambiala-en-produccion
-
-# Logs
-LOG_LEVEL=INFO
+DATABASE_URL=postgresql://usuario:password@localhost/document_manager
+SECRET_KEY=tu_clave_secreta_aqui
+ALLOWED_EXTENSIONS=pdf
+MAX_FILE_SIZE=10485760
+UPLOAD_PATH=uploads
 ```
 
-### Configuración por defecto
+### Base de datos
+La aplicación utiliza PostgreSQL con las siguientes tablas:
+- `documents`: Documentos subidos
+- `document_types`: Tipos de documento
+- `categories`: Categorías
+- `clients`: Clientes
 
-- **Puerto:** 8000
-- **Host:** 0.0.0.0 (accesible desde cualquier IP)
-- **Tamaño máximo de archivo:** 50MB
-- **Extensiones permitidas:** Solo PDF
-- **Directorio de uploads:** `uploads/`
+## 📚 API Endpoints
 
-## 🏗️ Arquitectura
+### Directorios
+- `GET /api/v1/directories` - Listar directorios
+- `POST /api/v1/directories` - Crear directorio
+- `DELETE /api/v1/directories/{path}` - Eliminar directorio
 
-### Backend (FastAPI)
+### Archivos
+- `GET /api/v1/files/{path}` - Listar archivos
+- `POST /api/v1/files/upload` - Subir archivo
+- `GET /api/v1/files/download/{path}` - Descargar archivo
+- `DELETE /api/v1/files/{path}` - Eliminar archivo
 
-- **`app/main.py`** - Configuración principal de FastAPI
-- **`app/config.py`** - Configuraciones centralizadas con Pydantic
-- **`app/models.py`** - Modelos de datos para validación
-- **`app/services.py`** - Lógica de negocio separada de las rutas
-- **`app/api/routes.py`** - Endpoints de la API REST
+### Documentos con metadatos
+- `POST /api/v1/documents/upload` - Subir documento con metadatos
+- `GET /api/v1/documents/types` - Obtener tipos de documento
+- `GET /api/v1/documents/categories` - Obtener categorías
+- `GET /api/v1/documents/clients` - Obtener clientes
 
-### Frontend (HTML/CSS/JS)
+## 🎯 Funcionalidades principales
 
-- **`static/index.html`** - Estructura HTML con diseño moderno
-- **`static/styles.css`** - Estilos CSS responsive y animaciones
-- **`static/app.js`** - Lógica JavaScript con manejo de errores
+### Gestión de directorios
+- Navegación visual con breadcrumb
+- Creación de directorios anidados
+- Eliminación recursiva de directorios
+
+### Subida de documentos
+- Interfaz drag & drop
+- Validación de tipos de archivo
+- Metadatos obligatorios (tipo, categoría)
+- Metadatos opcionales (cliente)
+- Detección de duplicados por hash
+
+### Explorador de archivos
+- Vista de lista con detalles
+- Acciones de descarga y eliminación
+- Navegación entre directorios
+- Información de archivos
 
 ## 🔒 Seguridad
 
-- ✅ **Validación de rutas** - Previene ataques de path traversal
-- ✅ **Sanitización de archivos** - Nombres de archivo seguros
-- ✅ **Validación de tipos** - Solo archivos PDF permitidos
-- ✅ **Límites de tamaño** - Control de tamaño de archivos
-- ✅ **CORS configurado** - Control de acceso desde otros dominios
+- Validación de rutas para prevenir path traversal
+- Sanitización de nombres de archivo
+- Límites de tamaño de archivo
+- Verificación de tipos de archivo permitidos
+- Hash SHA-256 para detección de duplicados
 
-## 🚨 Notas de Seguridad
+## 🧪 Desarrollo
 
-- Esta es una aplicación de desarrollo/demo
-- **No incluye autenticación** - Implementa autenticación para producción
-- **CORS abierto** - Configura dominios específicos en producción
-- **Archivos locales** - Considera usar almacenamiento en la nube para producción
-
-## 🐛 Solución de Problemas
-
-### Error: "Module not found"
+### Ejecutar en modo desarrollo
 ```bash
-source venv/bin/activate
-pip install -r requirements.txt
+python main.py
 ```
 
-### Error: "Port already in use"
-```bash
-# Cambiar puerto en .env o terminar proceso
-lsof -ti:8000 | xargs kill -9
-```
+### Estructura modular del frontend
+- `app.js`: Aplicación principal
+- `modules/api.js`: Comunicación con la API
+- `modules/fileManager.js`: Gestión de archivos
+- `modules/documentManager.js`: Gestión de documentos
+- `modules/ui.js`: Interfaz de usuario
+- `modules/renderer.js`: Renderizado de contenido
+- `modules/validation.js`: Validaciones
 
-### Error: "Permission denied"
-```bash
-# Verificar permisos del directorio
-chmod 755 uploads/
-```
-
-### Error: "Directory 'static' does not exist"
-```bash
-# El directorio se crea automáticamente, pero puedes crearlo manualmente
-mkdir static
-```
-
-## 📝 Desarrollo
-
-### Agregar nuevas funcionalidades
-
-1. **Nuevos endpoints:** Agregar en `app/api/routes.py`
-2. **Nueva lógica:** Implementar en `app/services.py`
-3. **Nuevos modelos:** Definir en `app/models.py`
-4. **Frontend:** Modificar archivos en `static/`
-
-### Estructura de commits recomendada
-
-```
-feat: agregar funcionalidad de búsqueda
-fix: corregir error en validación de archivos
-docs: actualizar documentación de la API
-style: mejorar diseño del frontend
-refactor: reorganizar estructura de servicios
-```
-
-## 📊 Rendimiento
-
-- **FastAPI** - Framework de alto rendimiento
-- **Async/await** - Operaciones asíncronas para mejor rendimiento
-- **Validación automática** - Pydantic para validación eficiente
-- **Archivos estáticos** - Servidos directamente por FastAPI
-
-## 🤝 Contribuir
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
-## 📄 Licencia
+## 📝 Licencia
 
 Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
 
-## 🙏 Agradecimientos
+## 👨‍💻 Autor
 
-- **FastAPI** - Framework web moderno y rápido
-- **Pydantic** - Validación de datos
-- **Font Awesome** - Iconos
-- **Uvicorn** - Servidor ASGI
+**Hugo Nienhausen**
+- GitHub: [@HugoNienhausen](https://github.com/HugoNienhausen)
+- Ubicación: Barcelona, Spain
 
----
+## 🤝 Contribuciones
 
-**Desarrollado con ❤️ usando FastAPI y JavaScript moderno** 
+Las contribuciones son bienvenidas. Por favor, abre un issue o un pull request.
+
+## 📄 Changelog
+
+Ver [CHANGELOG.md](CHANGELOG.md) para el historial de cambios. 
