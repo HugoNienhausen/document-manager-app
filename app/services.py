@@ -16,6 +16,7 @@ from datetime import datetime
 from fastapi import UploadFile, HTTPException
 from .config import settings, get_upload_path, validate_file_extension, get_safe_filename
 from .pydantic_models import DirectoryInfo, FileInfo
+import time
 
 
 class DirectoryService:
@@ -337,6 +338,7 @@ class FileService:
         try:
             print(f"🔍 Buscando archivo: {path}")
             
+            # Obtener la ruta completa del archivo
             # Separar el directorio del nombre del archivo
             path_parts = Path(path).parts
             if len(path_parts) < 2:
@@ -356,28 +358,28 @@ class FileService:
             
             # Sanitizar el directorio
             safe_directory = self._sanitize_path(str(directory_path))
-            full_path = self.upload_path / safe_directory / filename
+            file_path = self.upload_path / safe_directory / filename
             
-            print(f"📂 Ruta completa: {full_path}")
-            print(f"📂 Ruta absoluta: {full_path.absolute()}")
-            print(f"📂 Existe: {full_path.exists()}")
+            print(f"📂 Ruta completa: {file_path}")
+            print(f"📂 Ruta absoluta: {file_path.absolute()}")
+            print(f"📂 Existe: {file_path.exists()}")
             
-            if not full_path.exists():
-                print(f"❌ Archivo no encontrado: {full_path}")
+            if not file_path.exists():
+                print(f"❌ Archivo no encontrado: {file_path}")
                 raise HTTPException(
                     status_code=404,
                     detail=f"Archivo '{path}' no encontrado"
                 )
             
-            if not full_path.is_file():
-                print(f"❌ No es un archivo: {full_path}")
+            if not file_path.is_file():
+                print(f"❌ No es un archivo: {file_path}")
                 raise HTTPException(
                     status_code=400,
                     detail=f"'{path}' no es un archivo"
                 )
             
-            print(f"✅ Archivo encontrado: {full_path}")
-            return full_path
+            print(f"✅ Archivo encontrado: {file_path}")
+            return file_path
             
         except HTTPException:
             raise
@@ -683,6 +685,94 @@ class DocumentService:
             raise HTTPException(
                 status_code=400,
                 detail=f"Error al obtener categorías: {str(e)}"
+            )
+    
+    async def delete_document(self, path: str):
+        """
+        Elimina un documento tanto del sistema de archivos como de la base de datos.
+        
+        Args:
+            path (str): Ruta del archivo a eliminar (ej: "Documentos/archivo.pdf")
+            
+        Returns:
+            dict: Información del documento eliminado
+            
+        Raises:
+            HTTPException: Si el documento no existe o hay un error
+        """
+        from .database import get_db
+        from .models.document import Document
+        
+        try:
+            # Obtener la ruta completa del archivo
+            # Separar el directorio del nombre del archivo
+            path_parts = Path(path).parts
+            if len(path_parts) < 2:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Ruta de archivo inválida: debe incluir directorio y nombre de archivo"
+                )
+            
+            # El último elemento es el nombre del archivo
+            filename = path_parts[-1]
+            # El resto es el directorio
+            directory_parts = path_parts[:-1]
+            directory_path = Path(*directory_parts)
+            
+            # Sanitizar el directorio
+            safe_directory = self._sanitize_path(str(directory_path))
+            file_path = self.upload_path / safe_directory / filename
+            
+            # Verificar que el archivo existe
+            if not file_path.exists():
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Archivo '{path}' no encontrado"
+                )
+            
+            # Buscar el documento en la base de datos por la ruta local
+            db = next(get_db())
+            document = db.query(Document).filter(Document.local_path == str(file_path)).first()
+            
+            if not document:
+                # Si no está en la base de datos, solo eliminar el archivo
+                file_path.unlink()
+                return {
+                    "message": f"Archivo '{path}' eliminado del sistema de archivos (no estaba registrado en la base de datos)",
+                    "deleted_at": time.time(),
+                    "from_database": False
+                }
+            
+            # Obtener información del documento antes de eliminarlo
+            document_info = {
+                "id": document.id,  # type: ignore
+                "filename": document.filename,  # type: ignore
+                "file_hash": document.file_hash,  # type: ignore
+                "local_path": document.local_path,  # type: ignore
+                "file_size": document.file_size,  # type: ignore
+                "upload_date": document.upload_date  # type: ignore
+            }
+            
+            # Eliminar el registro de la base de datos
+            db.delete(document)
+            db.commit()
+            
+            # Eliminar el archivo del sistema de archivos
+            file_path.unlink()
+            
+            return {
+                "message": f"Documento '{path}' eliminado exitosamente del sistema de archivos y la base de datos",
+                "deleted_at": time.time(),
+                "from_database": True,
+                "document_info": document_info
+            }
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Error al eliminar documento: {str(e)}"
             )
     
     def _sanitize_path(self, path: str) -> Path:

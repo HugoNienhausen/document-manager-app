@@ -254,7 +254,8 @@ async def list_files(path: str):
 @api_router.delete("/files/{path:path}")
 async def delete_file(path: str):
     """
-    Elimina un archivo PDF.
+    Elimina un archivo PDF. Si el archivo está registrado en la base de datos,
+    también elimina el registro correspondiente.
     
     Args:
         path (str): Ruta del archivo a eliminar
@@ -266,22 +267,31 @@ async def delete_file(path: str):
         HTTPException: Si el archivo no existe o hay un error
     """
     try:
-        file_path = await file_service.get_file_path(path)
-        
-        # Verificar que el archivo existe
-        if not file_path.exists():
-            raise HTTPException(
-                status_code=404,
-                detail=f"Archivo '{path}' no encontrado"
-            )
-        
-        # Eliminar el archivo
-        file_path.unlink()
-        
-        return {
-            "message": f"Archivo '{path}' eliminado exitosamente",
-            "deleted_at": time.time()
-        }
+        # Intentar eliminar como documento (con metadatos)
+        try:
+            return await document_service.delete_document(path)
+        except HTTPException as e:
+            if e.status_code == 404:
+                # Si no está en la base de datos, eliminar solo del sistema de archivos
+                file_path = await file_service.get_file_path(path)
+                
+                # Verificar que el archivo existe
+                if not file_path.exists():
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Archivo '{path}' no encontrado"
+                    )
+                
+                # Eliminar el archivo
+                file_path.unlink()
+                
+                return {
+                    "message": f"Archivo '{path}' eliminado exitosamente del sistema de archivos",
+                    "deleted_at": time.time(),
+                    "from_database": False
+                }
+            else:
+                raise e
         
     except HTTPException:
         raise
@@ -473,6 +483,32 @@ async def get_categories():
     """
     try:
         return await document_service.get_categories()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+
+@api_router.delete("/documents/{path:path}")
+async def delete_document(path: str):
+    """
+    Elimina un documento tanto del sistema de archivos como de la base de datos.
+    
+    Args:
+        path (str): Ruta del archivo a eliminar (ej: "Documentos/archivo.pdf")
+        
+    Returns:
+        dict: Información del documento eliminado
+        
+    Raises:
+        HTTPException: Si el documento no existe o hay un error
+    """
+    try:
+        return await document_service.delete_document(path)
+        
     except HTTPException:
         raise
     except Exception as e:
