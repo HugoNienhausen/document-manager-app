@@ -10,6 +10,25 @@ import { rendererService } from './renderer.js';
 export class FileManagerService {
     constructor() {
         this.currentPath = '';
+        // Cargar directorios expandidos desde localStorage
+        this.expandedDirs = this.loadExpandedDirs();
+    }
+
+    loadExpandedDirs() {
+        try {
+            const data = localStorage.getItem('explorer_expanded_dirs');
+            return data ? JSON.parse(data) : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    saveExpandedDirs() {
+        localStorage.setItem('explorer_expanded_dirs', JSON.stringify(this.expandedDirs));
+    }
+
+    isDirExpanded(path) {
+        return this.expandedDirs.includes(path);
     }
 
     /**
@@ -162,6 +181,10 @@ export class FileManagerService {
             // Actualizar breadcrumb
             uiService.updateBreadcrumb(this.currentPath);
             
+            // Restaurar directorios expandidos
+            this.expandedDirs.forEach(dir => {
+                setTimeout(() => this.toggleDirectory(dir), 0);
+            });
         } catch (error) {
             console.error('Error al cargar explorador:', error);
             uiService.showNotification('Error al cargar el explorador', 'error');
@@ -219,11 +242,18 @@ export class FileManagerService {
             // Colapsar
             toggle.classList.remove('expanded');
             content.classList.remove('expanded');
+            // Quitar del array y guardar
+            this.expandedDirs = this.expandedDirs.filter(dir => dir !== path);
+            this.saveExpandedDirs();
         } else {
             // Expandir
             toggle.classList.add('expanded');
             content.classList.add('expanded');
-            
+            // Añadir al array y guardar
+            if (!this.expandedDirs.includes(path)) {
+                this.expandedDirs.push(path);
+                this.saveExpandedDirs();
+            }
             try {
                 // Cargar todos los directorios
                 const allDirectories = await apiService.getDirectories();
@@ -237,6 +267,13 @@ export class FileManagerService {
                 // Renderizar contenido (subdirectorios y archivos)
                 rendererService.renderDirectoryContent(path, subdirectories, files);
                 
+                // Expandir subdirectorios si estaban expandidos
+                subdirectories.forEach(subdir => {
+                    const subPath = `${path}/${subdir}`;
+                    if (this.isDirExpanded(subPath)) {
+                        setTimeout(() => this.toggleDirectory(subPath), 0);
+                    }
+                });
             } catch (error) {
                 console.error('Error al cargar contenido del directorio:', error);
                 uiService.showNotification('Error al cargar contenido del directorio', 'error');
