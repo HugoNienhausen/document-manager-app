@@ -9,7 +9,7 @@ de directorios y archivos PDF.
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends
 from fastapi.responses import FileResponse
-from typing import List
+from typing import List, Optional
 import time
 import os
 
@@ -354,8 +354,8 @@ async def upload_document_with_metadata(
     path: str = Form(..., description="Directorio destino"),
     document_type_id: int = Form(..., description="ID del tipo de documento"),
     category_id: int = Form(..., description="ID de la categoría"),
-    client_id: int = Form(None, description="ID del cliente (opcional)"),
-    upload_date: str = Form(None, description="Fecha de subida (YYYY-MM-DD HH:MM:SS)")
+    client_id: Optional[int] = Form(None, description="ID del cliente (opcional)"),
+    upload_date: Optional[str] = Form(None, description="Fecha de subida (YYYY-MM-DD HH:MM:SS)")
 ):
     """
     Sube un documento PDF y lo registra en la base de datos con metadatos.

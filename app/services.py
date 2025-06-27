@@ -569,21 +569,21 @@ class DocumentService:
             db.refresh(document)
             
             # Obtener información relacionada para la respuesta
-            document_type_name = document_type.name
-            category_name = category.name
-            client_name = client.name if client else None
+            document_type_name = document_type.name  # type: ignore
+            category_name = category.name  # type: ignore
+            client_name = client.name if client else None  # type: ignore
             
             return DocumentResponse(
-                id=document.id,
-                filename=document.filename,
-                file_hash=document.file_hash,
-                document_type=document_type_name,
-                client=client_name,
-                category=category_name,
-                local_path=document.local_path,
-                file_size=document.file_size,
-                upload_date=document.upload_date,
-                created_at=document.created_at
+                id=document.id,  # type: ignore
+                filename=document.filename,  # type: ignore
+                file_hash=document.file_hash,  # type: ignore
+                document_type=document_type_name,  # type: ignore
+                client=client_name,  # type: ignore
+                category=category_name,  # type: ignore
+                local_path=document.local_path,  # type: ignore
+                file_size=document.file_size,  # type: ignore
+                upload_date=document.upload_date,  # type: ignore
+                created_at=document.created_at  # type: ignore
             )
             
         except HTTPException:
@@ -611,9 +611,9 @@ class DocumentService:
             
             return [
                 DocumentTypeResponse(
-                    id=dt.id,
-                    name=dt.name,
-                    description=dt.description
+                    id=dt.id,  # type: ignore
+                    name=dt.name,  # type: ignore
+                    description=dt.description  # type: ignore
                 )
                 for dt in document_types
             ]
@@ -641,10 +641,10 @@ class DocumentService:
             
             return [
                 ClientResponse(
-                    id=c.id,
-                    name=c.name,
-                    email=c.email,
-                    phone=c.phone
+                    id=c.id,  # type: ignore
+                    name=c.name,  # type: ignore
+                    email=c.email,  # type: ignore
+                    phone=c.phone  # type: ignore
                 )
                 for c in clients
             ]
@@ -672,9 +672,9 @@ class DocumentService:
             
             return [
                 CategoryResponse(
-                    id=c.id,
-                    name=c.name,
-                    description=c.description
+                    id=c.id,  # type: ignore
+                    name=c.name,  # type: ignore
+                    description=c.description  # type: ignore
                 )
                 for c in categories
             ]
