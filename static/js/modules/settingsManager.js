@@ -70,10 +70,10 @@ export class SettingsManagerService {
                 this.openMetadataModal();
                 break;
             case 'settings':
-                notificationService.showInfo('Configuración general próximamente disponible');
+                uiService.showNotification('Configuración general próximamente disponible', 'info');
                 break;
             case 'about':
-                notificationService.showInfo('Gestor de PDFs v1.0.0 - Desarrollado con FastAPI y JavaScript');
+                uiService.showNotification('Gestor de PDFs v1.0.0 - Desarrollado con FastAPI y JavaScript', 'info');
                 break;
         }
     }
@@ -116,7 +116,7 @@ export class SettingsManagerService {
             await this.loadTabContent(this.currentTab);
         } catch (error) {
             console.error('Error loading metadata settings:', error);
-            notificationService.showError('Error al cargar la configuración de metadatos');
+            uiService.showNotification('Error al cargar la configuración de metadatos', 'error');
         }
     }
 
@@ -140,7 +140,7 @@ export class SettingsManagerService {
             this.renderDocumentTypes(documentTypes);
         } catch (error) {
             console.error('Error loading document types:', error);
-            notificationService.showError('Error al cargar tipos de documento');
+            uiService.showNotification('Error al cargar tipos de documento', 'error');
         }
     }
 
@@ -150,7 +150,7 @@ export class SettingsManagerService {
             this.renderCategories(categories);
         } catch (error) {
             console.error('Error loading categories:', error);
-            notificationService.showError('Error al cargar categorías');
+            uiService.showNotification('Error al cargar categorías', 'error');
         }
     }
 
@@ -160,7 +160,7 @@ export class SettingsManagerService {
             this.renderClients(clients);
         } catch (error) {
             console.error('Error loading clients:', error);
-            notificationService.showError('Error al cargar clientes');
+            uiService.showNotification('Error al cargar clientes', 'error');
         }
     }
 
@@ -264,7 +264,7 @@ export class SettingsManagerService {
             data.email = parts[1] || '';
             data.phone = parts[2] || '';
         }
-
+        
         this.showEditForm(type, data);
     }
 
@@ -375,17 +375,17 @@ export class SettingsManagerService {
             
             this.removeForm(form);
             await this.loadTabContent(this.currentTab);
-            notificationService.showSuccess(`${this.getTypeLabel(type)} ${isEdit ? 'actualizado' : 'creado'} exitosamente`);
+            uiService.showNotification(`${this.getTypeLabel(type)} ${isEdit ? 'actualizado' : 'creado'} exitosamente`, 'success');
         } catch (error) {
             console.error('Error saving item:', error);
-            notificationService.showError(`Error al ${isEdit ? 'actualizar' : 'crear'} ${this.getTypeLabel(type).toLowerCase()}`);
+            uiService.showNotification(`Error al ${isEdit ? 'actualizar' : 'crear'} ${this.getTypeLabel(type).toLowerCase()}`, 'error');
         }
     }
 
     getFormData(form, type) {
         const name = form.querySelector('#name').value.trim();
         if (!name) {
-            notificationService.showError('El nombre es obligatorio');
+            uiService.showNotification('El nombre es obligatorio', 'error');
             return null;
         }
 
@@ -453,10 +453,10 @@ export class SettingsManagerService {
             }
 
             await this.loadTabContent(this.currentTab);
-            notificationService.showSuccess(`${this.getTypeLabel(type)} eliminado exitosamente`);
+            uiService.showNotification(`${this.getTypeLabel(type)} eliminado exitosamente`, 'success');
         } catch (error) {
             console.error('Error deleting item:', error);
-            notificationService.showError(`Error al eliminar ${this.getTypeLabel(type).toLowerCase()}`);
+            uiService.showNotification(`Error al eliminar ${this.getTypeLabel(type).toLowerCase()}`, 'error');
         }
     }
 
