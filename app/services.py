@@ -16,6 +16,12 @@ from datetime import datetime
 from fastapi import UploadFile, HTTPException
 from .config import settings, get_upload_path, validate_file_extension, get_safe_filename
 from .pydantic_models import DirectoryInfo, FileInfo
+from .models.document import Document
+from .models.document_type import DocumentType
+from .models.category import Category
+from .models.client import Client
+from .database import get_db
+import time
 
 
 class DirectoryService:
@@ -337,6 +343,7 @@ class FileService:
         try:
             print(f"🔍 Buscando archivo: {path}")
             
+            # Obtener la ruta completa del archivo
             # Separar el directorio del nombre del archivo
             path_parts = Path(path).parts
             if len(path_parts) < 2:
@@ -356,28 +363,28 @@ class FileService:
             
             # Sanitizar el directorio
             safe_directory = self._sanitize_path(str(directory_path))
-            full_path = self.upload_path / safe_directory / filename
+            file_path = self.upload_path / safe_directory / filename
             
-            print(f"📂 Ruta completa: {full_path}")
-            print(f"📂 Ruta absoluta: {full_path.absolute()}")
-            print(f"📂 Existe: {full_path.exists()}")
+            print(f"📂 Ruta completa: {file_path}")
+            print(f"📂 Ruta absoluta: {file_path.absolute()}")
+            print(f"📂 Existe: {file_path.exists()}")
             
-            if not full_path.exists():
-                print(f"❌ Archivo no encontrado: {full_path}")
+            if not file_path.exists():
+                print(f"❌ Archivo no encontrado: {file_path}")
                 raise HTTPException(
                     status_code=404,
                     detail=f"Archivo '{path}' no encontrado"
                 )
             
-            if not full_path.is_file():
-                print(f"❌ No es un archivo: {full_path}")
+            if not file_path.is_file():
+                print(f"❌ No es un archivo: {file_path}")
                 raise HTTPException(
                     status_code=400,
                     detail=f"'{path}' no es un archivo"
                 )
             
-            print(f"✅ Archivo encontrado: {full_path}")
-            return full_path
+            print(f"✅ Archivo encontrado: {file_path}")
+            return file_path
             
         except HTTPException:
             raise
@@ -569,21 +576,21 @@ class DocumentService:
             db.refresh(document)
             
             # Obtener información relacionada para la respuesta
-            document_type_name = document_type.name
-            category_name = category.name
-            client_name = client.name if client else None
+            document_type_name = document_type.name  # type: ignore
+            category_name = category.name  # type: ignore
+            client_name = client.name if client else None  # type: ignore
             
             return DocumentResponse(
-                id=document.id,
-                filename=document.filename,
-                file_hash=document.file_hash,
-                document_type=document_type_name,
-                client=client_name,
-                category=category_name,
-                local_path=document.local_path,
-                file_size=document.file_size,
-                upload_date=document.upload_date,
-                created_at=document.created_at
+                id=document.id,  # type: ignore
+                filename=document.filename,  # type: ignore
+                file_hash=document.file_hash,  # type: ignore
+                document_type=document_type_name,  # type: ignore
+                client=client_name,  # type: ignore
+                category=category_name,  # type: ignore
+                local_path=document.local_path,  # type: ignore
+                file_size=document.file_size,  # type: ignore
+                upload_date=document.upload_date,  # type: ignore
+                created_at=document.created_at  # type: ignore
             )
             
         except HTTPException:
@@ -611,9 +618,9 @@ class DocumentService:
             
             return [
                 DocumentTypeResponse(
-                    id=dt.id,
-                    name=dt.name,
-                    description=dt.description
+                    id=dt.id,  # type: ignore
+                    name=dt.name,  # type: ignore
+                    description=dt.description  # type: ignore
                 )
                 for dt in document_types
             ]
@@ -641,10 +648,10 @@ class DocumentService:
             
             return [
                 ClientResponse(
-                    id=c.id,
-                    name=c.name,
-                    email=c.email,
-                    phone=c.phone
+                    id=c.id,  # type: ignore
+                    name=c.name,  # type: ignore
+                    email=c.email,  # type: ignore
+                    phone=c.phone  # type: ignore
                 )
                 for c in clients
             ]
@@ -672,9 +679,9 @@ class DocumentService:
             
             return [
                 CategoryResponse(
-                    id=c.id,
-                    name=c.name,
-                    description=c.description
+                    id=c.id,  # type: ignore
+                    name=c.name,  # type: ignore
+                    description=c.description  # type: ignore
                 )
                 for c in categories
             ]
@@ -687,7 +694,7 @@ class DocumentService:
     
     async def delete_document(self, path: str):
         """
-        Elimina un documento de la base de datos y del sistema de archivos.
+        Elimina un documento tanto del sistema de archivos como de la base de datos.
         
         Args:
             path (str): Ruta del archivo a eliminar (ej: "Documentos/archivo.pdf")
@@ -703,74 +710,6 @@ class DocumentService:
         
         try:
             # Obtener la ruta completa del archivo
-            file_path = await self._get_file_path(path)
-            
-            # Buscar el documento en la base de datos por la ruta local
-            db = next(get_db())
-            document = db.query(Document).filter(Document.local_path == str(file_path)).first()
-            
-            if not document:
-                # Si no existe en la base de datos, solo eliminar el archivo
-                if file_path.exists():
-                    file_path.unlink()
-                    return {
-                        "message": f"Archivo '{path}' eliminado del sistema de archivos (no estaba registrado en la base de datos)",
-                        "deleted_at": datetime.now()
-                    }
-                else:
-                    raise HTTPException(
-                        status_code=404,
-                        detail=f"Archivo '{path}' no encontrado"
-                    )
-            
-            # Eliminar el archivo del sistema de archivos
-            if file_path.exists():
-                file_path.unlink()
-            
-            # Guardar información del documento antes de eliminarlo
-            deleted_document = {
-                "id": document.id,
-                "filename": document.filename,
-                "file_hash": document.file_hash,
-                "local_path": document.local_path,
-                "file_size": document.file_size,
-                "upload_date": document.upload_date
-            }
-            
-            # Eliminar el registro de la base de datos
-            db.delete(document)
-            db.commit()
-            
-            return {
-                "message": f"Documento '{path}' eliminado exitosamente",
-                "deleted_document": deleted_document,
-                "deleted_at": datetime.now()
-            }
-            
-        except HTTPException:
-            raise
-        except Exception as e:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Error al eliminar documento: {str(e)}"
-            )
-    
-    async def _get_file_path(self, path: str) -> Path:
-        """
-        Obtiene la ruta completa de un archivo.
-        
-        Args:
-            path (str): Ruta del archivo (ej: "Documentos/archivo.pdf")
-            
-        Returns:
-            Path: Ruta completa del archivo
-            
-        Raises:
-            HTTPException: Si el archivo no existe
-        """
-        try:
-            print(f"🔍 Buscando archivo: {path}")
-            
             # Separar el directorio del nombre del archivo
             path_parts = Path(path).parts
             if len(path_parts) < 2:
@@ -785,41 +724,60 @@ class DocumentService:
             directory_parts = path_parts[:-1]
             directory_path = Path(*directory_parts)
             
-            print(f"📁 Directorio: {directory_path}")
-            print(f"📄 Archivo: {filename}")
-            
             # Sanitizar el directorio
             safe_directory = self._sanitize_path(str(directory_path))
-            full_path = self.upload_path / safe_directory / filename
+            file_path = self.upload_path / safe_directory / filename
             
-            print(f"📂 Ruta completa: {full_path}")
-            print(f"📂 Ruta absoluta: {full_path.absolute()}")
-            print(f"📂 Existe: {full_path.exists()}")
-            
-            if not full_path.exists():
-                print(f"❌ Archivo no encontrado: {full_path}")
+            # Verificar que el archivo existe
+            if not file_path.exists():
                 raise HTTPException(
                     status_code=404,
                     detail=f"Archivo '{path}' no encontrado"
                 )
             
-            if not full_path.is_file():
-                print(f"❌ No es un archivo: {full_path}")
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"'{path}' no es un archivo"
-                )
+            # Buscar el documento en la base de datos por la ruta local
+            db = next(get_db())
+            document = db.query(Document).filter(Document.local_path == str(file_path)).first()
             
-            print(f"✅ Archivo encontrado: {full_path}")
-            return full_path
+            if not document:
+                # Si no está en la base de datos, solo eliminar el archivo
+                file_path.unlink()
+                return {
+                    "message": f"Archivo '{path}' eliminado del sistema de archivos (no estaba registrado en la base de datos)",
+                    "deleted_at": time.time(),
+                    "from_database": False
+                }
+            
+            # Obtener información del documento antes de eliminarlo
+            document_info = {
+                "id": document.id,  # type: ignore
+                "filename": document.filename,  # type: ignore
+                "file_hash": document.file_hash,  # type: ignore
+                "local_path": document.local_path,  # type: ignore
+                "file_size": document.file_size,  # type: ignore
+                "upload_date": document.upload_date  # type: ignore
+            }
+            
+            # Eliminar el registro de la base de datos
+            db.delete(document)
+            db.commit()
+            
+            # Eliminar el archivo del sistema de archivos
+            file_path.unlink()
+            
+            return {
+                "message": f"Documento '{path}' eliminado exitosamente del sistema de archivos y la base de datos",
+                "deleted_at": time.time(),
+                "from_database": True,
+                "document_info": document_info
+            }
             
         except HTTPException:
             raise
         except Exception as e:
-            print(f"❌ Error al obtener archivo '{path}': {str(e)}")
             raise HTTPException(
                 status_code=400,
-                detail=f"Error al obtener archivo: {str(e)}"
+                detail=f"Error al eliminar documento: {str(e)}"
             )
     
     def _sanitize_path(self, path: str) -> Path:
@@ -858,4 +816,454 @@ class DocumentService:
                 detail="Ruta inválida: no puede salir del directorio base"
             )
         
-        return clean_path 
+        return clean_path
+
+    # ============================================================================
+    # MÉTODOS CRUD PARA METADATOS
+    # ============================================================================
+
+    async def create_document_type(self, document_type_data):
+        """
+        Crea un nuevo tipo de documento.
+        
+        Args:
+            document_type_data: Datos del tipo de documento
+            
+        Returns:
+            DocumentTypeResponse: Tipo de documento creado
+        """
+        from .pydantic_models import DocumentTypeResponse
+        
+        try:
+            db = next(get_db())
+            
+            # Verificar si ya existe un tipo con el mismo nombre
+            existing_type = db.query(DocumentType).filter(DocumentType.name == document_type_data.name).first()
+            if existing_type:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Ya existe un tipo de documento con el nombre '{document_type_data.name}'"
+                )
+            
+            # Crear el nuevo tipo de documento
+            document_type = DocumentType(
+                name=document_type_data.name,
+                description=document_type_data.description
+            )
+            
+            db.add(document_type)
+            db.commit()
+            db.refresh(document_type)
+            
+            return DocumentTypeResponse(
+                id=document_type.id,  # type: ignore
+                name=document_type.name,  # type: ignore
+                description=document_type.description  # type: ignore
+            )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Error al crear tipo de documento: {str(e)}"
+            )
+
+    async def update_document_type(self, type_id: int, document_type_data):
+        """
+        Actualiza un tipo de documento existente.
+        
+        Args:
+            type_id (int): ID del tipo de documento
+            document_type_data: Datos actualizados
+            
+        Returns:
+            DocumentTypeResponse: Tipo de documento actualizado
+        """
+        from .pydantic_models import DocumentTypeResponse
+        
+        try:
+            db = next(get_db())
+            
+            # Buscar el tipo de documento
+            document_type = db.query(DocumentType).filter(DocumentType.id == type_id).first()
+            if not document_type:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Tipo de documento con ID {type_id} no encontrado"
+                )
+            
+            # Verificar si el nuevo nombre ya existe (si se está cambiando)
+            if document_type_data.name and document_type_data.name != document_type.name:
+                existing_type = db.query(DocumentType).filter(
+                    DocumentType.name == document_type_data.name,
+                    DocumentType.id != type_id
+                ).first()
+                if existing_type:
+                    raise HTTPException(
+                        status_code=409,
+                        detail=f"Ya existe un tipo de documento con el nombre '{document_type_data.name}'"
+                    )
+            
+            # Actualizar los campos
+            if document_type_data.name is not None:
+                document_type.name = document_type_data.name  # type: ignore
+            if document_type_data.description is not None:
+                document_type.description = document_type_data.description  # type: ignore
+            
+            db.commit()
+            db.refresh(document_type)
+            
+            return DocumentTypeResponse(
+                id=document_type.id,  # type: ignore
+                name=document_type.name,  # type: ignore
+                description=document_type.description  # type: ignore
+            )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Error al actualizar tipo de documento: {str(e)}"
+            )
+
+    async def delete_document_type(self, type_id: int):
+        """
+        Elimina un tipo de documento.
+        
+        Args:
+            type_id (int): ID del tipo de documento
+            
+        Raises:
+            HTTPException: Si el tipo no existe o está en uso
+        """
+        try:
+            db = next(get_db())
+            
+            # Buscar el tipo de documento
+            document_type = db.query(DocumentType).filter(DocumentType.id == type_id).first()
+            if not document_type:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Tipo de documento con ID {type_id} no encontrado"
+                )
+            
+            # Verificar si está siendo usado por algún documento
+            documents_using_type = db.query(Document).filter(Document.document_type_id == type_id).count()
+            if documents_using_type > 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"No se puede eliminar el tipo de documento porque está siendo usado por {documents_using_type} documento(s)"
+                )
+            
+            # Eliminar el tipo de documento
+            db.delete(document_type)
+            db.commit()
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Error al eliminar tipo de documento: {str(e)}"
+            )
+
+    async def create_category(self, category_data):
+        """
+        Crea una nueva categoría.
+        
+        Args:
+            category_data: Datos de la categoría
+            
+        Returns:
+            CategoryResponse: Categoría creada
+        """
+        from .pydantic_models import CategoryResponse
+        
+        try:
+            db = next(get_db())
+            
+            # Verificar si ya existe una categoría con el mismo nombre
+            existing_category = db.query(Category).filter(Category.name == category_data.name).first()
+            if existing_category:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Ya existe una categoría con el nombre '{category_data.name}'"
+                )
+            
+            # Crear la nueva categoría
+            category = Category(
+                name=category_data.name,
+                description=category_data.description
+            )
+            
+            db.add(category)
+            db.commit()
+            db.refresh(category)
+            
+            return CategoryResponse(
+                id=category.id,  # type: ignore
+                name=category.name,  # type: ignore
+                description=category.description  # type: ignore
+            )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Error al crear categoría: {str(e)}"
+            )
+
+    async def update_category(self, category_id: int, category_data):
+        """
+        Actualiza una categoría existente.
+        
+        Args:
+            category_id (int): ID de la categoría
+            category_data: Datos actualizados
+            
+        Returns:
+            CategoryResponse: Categoría actualizada
+        """
+        from .pydantic_models import CategoryResponse
+        
+        try:
+            db = next(get_db())
+            
+            # Buscar la categoría
+            category = db.query(Category).filter(Category.id == category_id).first()
+            if not category:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Categoría con ID {category_id} no encontrada"
+                )
+            
+            # Verificar si el nuevo nombre ya existe (si se está cambiando)
+            if category_data.name and category_data.name != category.name:
+                existing_category = db.query(Category).filter(
+                    Category.name == category_data.name,
+                    Category.id != category_id
+                ).first()
+                if existing_category:
+                    raise HTTPException(
+                        status_code=409,
+                        detail=f"Ya existe una categoría con el nombre '{category_data.name}'"
+                    )
+            
+            # Actualizar los campos
+            if category_data.name is not None:
+                category.name = category_data.name  # type: ignore
+            if category_data.description is not None:
+                category.description = category_data.description  # type: ignore
+            
+            db.commit()
+            db.refresh(category)
+            
+            return CategoryResponse(
+                id=category.id,  # type: ignore
+                name=category.name,  # type: ignore
+                description=category.description  # type: ignore
+            )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Error al actualizar categoría: {str(e)}"
+            )
+
+    async def delete_category(self, category_id: int):
+        """
+        Elimina una categoría.
+        
+        Args:
+            category_id (int): ID de la categoría
+            
+        Raises:
+            HTTPException: Si la categoría no existe o está en uso
+        """
+        try:
+            db = next(get_db())
+            
+            # Buscar la categoría
+            category = db.query(Category).filter(Category.id == category_id).first()
+            if not category:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Categoría con ID {category_id} no encontrada"
+                )
+            
+            # Verificar si está siendo usada por algún documento
+            documents_using_category = db.query(Document).filter(Document.category_id == category_id).count()
+            if documents_using_category > 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"No se puede eliminar la categoría porque está siendo usada por {documents_using_category} documento(s)"
+                )
+            
+            # Eliminar la categoría
+            db.delete(category)
+            db.commit()
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Error al eliminar categoría: {str(e)}"
+            )
+
+    async def create_client(self, client_data):
+        """
+        Crea un nuevo cliente.
+        
+        Args:
+            client_data: Datos del cliente
+            
+        Returns:
+            ClientResponse: Cliente creado
+        """
+        from .pydantic_models import ClientResponse
+        
+        try:
+            db = next(get_db())
+            
+            # Verificar si ya existe un cliente con el mismo nombre
+            existing_client = db.query(Client).filter(Client.name == client_data.name).first()
+            if existing_client:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Ya existe un cliente con el nombre '{client_data.name}'"
+                )
+            
+            # Crear el nuevo cliente
+            client = Client(
+                name=client_data.name,
+                email=client_data.email,
+                phone=client_data.phone
+            )
+            
+            db.add(client)
+            db.commit()
+            db.refresh(client)
+            
+            return ClientResponse(
+                id=client.id,  # type: ignore
+                name=client.name,  # type: ignore
+                email=client.email,  # type: ignore
+                phone=client.phone  # type: ignore
+            )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Error al crear cliente: {str(e)}"
+            )
+
+    async def update_client(self, client_id: int, client_data):
+        """
+        Actualiza un cliente existente.
+        
+        Args:
+            client_id (int): ID del cliente
+            client_data: Datos actualizados
+            
+        Returns:
+            ClientResponse: Cliente actualizado
+        """
+        from .pydantic_models import ClientResponse
+        
+        try:
+            db = next(get_db())
+            
+            # Buscar el cliente
+            client = db.query(Client).filter(Client.id == client_id).first()
+            if not client:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Cliente con ID {client_id} no encontrado"
+                )
+            
+            # Verificar si el nuevo nombre ya existe (si se está cambiando)
+            if client_data.name and client_data.name != client.name:
+                existing_client = db.query(Client).filter(
+                    Client.name == client_data.name,
+                    Client.id != client_id
+                ).first()
+                if existing_client:
+                    raise HTTPException(
+                        status_code=409,
+                        detail=f"Ya existe un cliente con el nombre '{client_data.name}'"
+                    )
+            
+            # Actualizar los campos
+            if client_data.name is not None:
+                client.name = client_data.name  # type: ignore
+            if client_data.email is not None:
+                client.email = client_data.email  # type: ignore
+            if client_data.phone is not None:
+                client.phone = client_data.phone  # type: ignore
+            
+            db.commit()
+            db.refresh(client)
+            
+            return ClientResponse(
+                id=client.id,  # type: ignore
+                name=client.name,  # type: ignore
+                email=client.email,  # type: ignore
+                phone=client.phone  # type: ignore
+            )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Error al actualizar cliente: {str(e)}"
+            )
+
+    async def delete_client(self, client_id: int):
+        """
+        Elimina un cliente.
+        
+        Args:
+            client_id (int): ID del cliente
+            
+        Raises:
+            HTTPException: Si el cliente no existe o está en uso
+        """
+        try:
+            db = next(get_db())
+            
+            # Buscar el cliente
+            client = db.query(Client).filter(Client.id == client_id).first()
+            if not client:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Cliente con ID {client_id} no encontrado"
+                )
+            
+            # Verificar si está siendo usado por algún documento
+            documents_using_client = db.query(Document).filter(Document.client_id == client_id).count()
+            if documents_using_client > 0:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"No se puede eliminar el cliente porque está siendo usado por {documents_using_client} documento(s)"
+                )
+            
+            # Eliminar el cliente
+            db.delete(client)
+            db.commit()
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Error al eliminar cliente: {str(e)}"
+            ) 

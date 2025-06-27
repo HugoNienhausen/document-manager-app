@@ -234,4 +234,84 @@ class CategoryResponse(BaseModel):
     """
     id: int = Field(..., description="ID de la categoría")
     name: str = Field(..., description="Nombre de la categoría")
-    description: Optional[str] = Field(None, description="Descripción de la categoría") 
+    description: Optional[str] = Field(None, description="Descripción de la categoría")
+
+
+# ============================================================================
+# MODELOS PARA OPERACIONES CRUD DE METADATOS
+# ============================================================================
+
+class DocumentTypeCreate(BaseModel):
+    """
+    Modelo para crear un tipo de documento.
+    
+    Attributes:
+        name (str): Nombre del tipo de documento
+        description (Optional[str]): Descripción del tipo
+    """
+    name: str = Field(..., description="Nombre del tipo de documento")
+    description: Optional[str] = Field(None, description="Descripción del tipo")
+
+
+class DocumentTypeUpdate(BaseModel):
+    """
+    Modelo para actualizar un tipo de documento.
+    
+    Attributes:
+        name (Optional[str]): Nombre del tipo de documento
+        description (Optional[str]): Descripción del tipo
+    """
+    name: Optional[str] = Field(None, description="Nombre del tipo de documento")
+    description: Optional[str] = Field(None, description="Descripción del tipo")
+
+
+class CategoryCreate(BaseModel):
+    """
+    Modelo para crear una categoría.
+    
+    Attributes:
+        name (str): Nombre de la categoría
+        description (Optional[str]): Descripción de la categoría
+    """
+    name: str = Field(..., description="Nombre de la categoría")
+    description: Optional[str] = Field(None, description="Descripción de la categoría")
+
+
+class CategoryUpdate(BaseModel):
+    """
+    Modelo para actualizar una categoría.
+    
+    Attributes:
+        name (Optional[str]): Nombre de la categoría
+        description (Optional[str]): Descripción de la categoría
+    """
+    name: Optional[str] = Field(None, description="Nombre de la categoría")
+    description: Optional[str] = Field(None, description="Descripción de la categoría")
+
+
+class ClientCreate(BaseModel):
+    """
+    Modelo para crear un cliente.
+    
+    Attributes:
+        name (str): Nombre del cliente
+        email (Optional[str]): Email del cliente
+        phone (Optional[str]): Teléfono del cliente
+    """
+    name: str = Field(..., description="Nombre del cliente")
+    email: Optional[str] = Field(None, description="Email del cliente")
+    phone: Optional[str] = Field(None, description="Teléfono del cliente")
+
+
+class ClientUpdate(BaseModel):
+    """
+    Modelo para actualizar un cliente.
+    
+    Attributes:
+        name (Optional[str]): Nombre del cliente
+        email (Optional[str]): Email del cliente
+        phone (Optional[str]): Teléfono del cliente
+    """
+    name: Optional[str] = Field(None, description="Nombre del cliente")
+    email: Optional[str] = Field(None, description="Email del cliente")
+    phone: Optional[str] = Field(None, description="Teléfono del cliente") 

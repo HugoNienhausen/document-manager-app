@@ -6,7 +6,6 @@ import { apiService } from './api.js';
 import { validationService } from './validation.js';
 import { uiService } from './ui.js';
 import { rendererService } from './renderer.js';
-import { fileManagerService } from './fileManager.js';
 
 export class DocumentManagerService {
     constructor() {
@@ -274,7 +273,8 @@ export class DocumentManagerService {
      * Carga el explorador (delegado al FileManager)
      */
     async loadExplorer() {
-        await fileManagerService.loadExplorer();
+        // Este método se delega al FileManager desde la aplicación principal
+        console.log('DocumentManager: loadExplorer llamado');
     }
 
     /**

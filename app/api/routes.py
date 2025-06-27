@@ -9,7 +9,7 @@ de directorios y archivos PDF.
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends
 from fastapi.responses import FileResponse
-from typing import List
+from typing import List, Optional
 import time
 import os
 
@@ -17,7 +17,9 @@ from ..services import DirectoryService, FileService, DocumentService
 from ..pydantic_models import (
     DirectoryInfo, FileInfo, DirectoryResponse, FileUploadResponse,
     ErrorResponse, HealthCheck, DocumentUploadResponse, DocumentResponse,
-    DocumentTypeResponse, ClientResponse, CategoryResponse
+    DocumentTypeResponse, ClientResponse, CategoryResponse,
+    DocumentTypeCreate, DocumentTypeUpdate, CategoryCreate, CategoryUpdate,
+    ClientCreate, ClientUpdate
 )
 from ..config import settings
 
@@ -254,7 +256,8 @@ async def list_files(path: str):
 @api_router.delete("/files/{path:path}")
 async def delete_file(path: str):
     """
-    Elimina un archivo PDF y su registro de la base de datos si existe.
+    Elimina un archivo PDF. Si el archivo está registrado en la base de datos,
+    también elimina el registro correspondiente.
     
     Args:
         path (str): Ruta del archivo a eliminar
@@ -266,10 +269,31 @@ async def delete_file(path: str):
         HTTPException: Si el archivo no existe o hay un error
     """
     try:
-        # Usar el DocumentService para eliminar tanto el archivo como el registro de la BD
-        result = await document_service.delete_document(path)
-        
-        return result
+        # Intentar eliminar como documento (con metadatos)
+        try:
+            return await document_service.delete_document(path)
+        except HTTPException as e:
+            if e.status_code == 404:
+                # Si no está en la base de datos, eliminar solo del sistema de archivos
+                file_path = await file_service.get_file_path(path)
+                
+                # Verificar que el archivo existe
+                if not file_path.exists():
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Archivo '{path}' no encontrado"
+                    )
+                
+                # Eliminar el archivo
+                file_path.unlink()
+                
+                return {
+                    "message": f"Archivo '{path}' eliminado exitosamente del sistema de archivos",
+                    "deleted_at": time.time(),
+                    "from_database": False
+                }
+            else:
+                raise e
         
     except HTTPException:
         raise
@@ -342,8 +366,8 @@ async def upload_document_with_metadata(
     path: str = Form(..., description="Directorio destino"),
     document_type_id: int = Form(..., description="ID del tipo de documento"),
     category_id: int = Form(..., description="ID de la categoría"),
-    client_id: int = Form(None, description="ID del cliente (opcional)"),
-    upload_date: str = Form(None, description="Fecha de subida (YYYY-MM-DD HH:MM:SS)")
+    client_id: Optional[int] = Form(None, description="ID del cliente (opcional)"),
+    upload_date: Optional[str] = Form(None, description="Fecha de subida (YYYY-MM-DD HH:MM:SS)")
 ):
     """
     Sube un documento PDF y lo registra en la base de datos con metadatos.
@@ -461,6 +485,244 @@ async def get_categories():
     """
     try:
         return await document_service.get_categories()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+
+@api_router.delete("/documents/{path:path}")
+async def delete_document(path: str):
+    """
+    Elimina un documento tanto del sistema de archivos como de la base de datos.
+    
+    Args:
+        path (str): Ruta del archivo a eliminar (ej: "Documentos/archivo.pdf")
+        
+    Returns:
+        dict: Información del documento eliminado
+        
+    Raises:
+        HTTPException: Si el documento no existe o hay un error
+    """
+    try:
+        return await document_service.delete_document(path)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+
+# ============================================================================
+# RUTAS CRUD PARA METADATOS
+# ============================================================================
+
+# Document Types CRUD
+@api_router.post("/metadata/document-types", response_model=DocumentTypeResponse)
+async def create_document_type(document_type: DocumentTypeCreate):
+    """
+    Crea un nuevo tipo de documento.
+    
+    Args:
+        document_type (DocumentTypeCreate): Datos del tipo de documento
+        
+    Returns:
+        DocumentTypeResponse: Tipo de documento creado
+    """
+    try:
+        return await document_service.create_document_type(document_type)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+@api_router.put("/metadata/document-types/{type_id}", response_model=DocumentTypeResponse)
+async def update_document_type(type_id: int, document_type: DocumentTypeUpdate):
+    """
+    Actualiza un tipo de documento existente.
+    
+    Args:
+        type_id (int): ID del tipo de documento
+        document_type (DocumentTypeUpdate): Datos actualizados
+        
+    Returns:
+        DocumentTypeResponse: Tipo de documento actualizado
+    """
+    try:
+        return await document_service.update_document_type(type_id, document_type)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+@api_router.delete("/metadata/document-types/{type_id}")
+async def delete_document_type(type_id: int):
+    """
+    Elimina un tipo de documento.
+    
+    Args:
+        type_id (int): ID del tipo de documento
+        
+    Returns:
+        dict: Mensaje de confirmación
+    """
+    try:
+        await document_service.delete_document_type(type_id)
+        return {
+            "message": f"Tipo de documento con ID {type_id} eliminado exitosamente",
+            "deleted_at": time.time()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+# Categories CRUD
+@api_router.post("/metadata/categories", response_model=CategoryResponse)
+async def create_category(category: CategoryCreate):
+    """
+    Crea una nueva categoría.
+    
+    Args:
+        category (CategoryCreate): Datos de la categoría
+        
+    Returns:
+        CategoryResponse: Categoría creada
+    """
+    try:
+        return await document_service.create_category(category)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+@api_router.put("/metadata/categories/{category_id}", response_model=CategoryResponse)
+async def update_category(category_id: int, category: CategoryUpdate):
+    """
+    Actualiza una categoría existente.
+    
+    Args:
+        category_id (int): ID de la categoría
+        category (CategoryUpdate): Datos actualizados
+        
+    Returns:
+        CategoryResponse: Categoría actualizada
+    """
+    try:
+        return await document_service.update_category(category_id, category)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+@api_router.delete("/metadata/categories/{category_id}")
+async def delete_category(category_id: int):
+    """
+    Elimina una categoría.
+    
+    Args:
+        category_id (int): ID de la categoría
+        
+    Returns:
+        dict: Mensaje de confirmación
+    """
+    try:
+        await document_service.delete_category(category_id)
+        return {
+            "message": f"Categoría con ID {category_id} eliminada exitosamente",
+            "deleted_at": time.time()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+# Clients CRUD
+@api_router.post("/metadata/clients", response_model=ClientResponse)
+async def create_client(client: ClientCreate):
+    """
+    Crea un nuevo cliente.
+    
+    Args:
+        client (ClientCreate): Datos del cliente
+        
+    Returns:
+        ClientResponse: Cliente creado
+    """
+    try:
+        return await document_service.create_client(client)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+@api_router.put("/metadata/clients/{client_id}", response_model=ClientResponse)
+async def update_client(client_id: int, client: ClientUpdate):
+    """
+    Actualiza un cliente existente.
+    
+    Args:
+        client_id (int): ID del cliente
+        client (ClientUpdate): Datos actualizados
+        
+    Returns:
+        ClientResponse: Cliente actualizado
+    """
+    try:
+        return await document_service.update_client(client_id, client)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+@api_router.delete("/metadata/clients/{client_id}")
+async def delete_client(client_id: int):
+    """
+    Elimina un cliente.
+    
+    Args:
+        client_id (int): ID del cliente
+        
+    Returns:
+        dict: Mensaje de confirmación
+    """
+    try:
+        await document_service.delete_client(client_id)
+        return {
+            "message": f"Cliente con ID {client_id} eliminado exitosamente",
+            "deleted_at": time.time()
+        }
     except HTTPException:
         raise
     except Exception as e:

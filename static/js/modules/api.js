@@ -149,6 +149,87 @@ export class ApiService {
     async getCategories() {
         return this.request('/documents/categories');
     }
+
+    // Métodos para metadatos - Document Types
+    async createDocumentType(data) {
+        return this.request('/metadata/document-types', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+    }
+
+    async updateDocumentType(id, data) {
+        return this.request(`/metadata/document-types/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+    }
+
+    async deleteDocumentType(id) {
+        return this.request(`/metadata/document-types/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    // Métodos para metadatos - Categories
+    async createCategory(data) {
+        return this.request('/metadata/categories', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+    }
+
+    async updateCategory(id, data) {
+        return this.request(`/metadata/categories/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+    }
+
+    async deleteCategory(id) {
+        return this.request(`/metadata/categories/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    // Métodos para metadatos - Clients
+    async createClient(data) {
+        return this.request('/metadata/clients', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+    }
+
+    async updateClient(id, data) {
+        return this.request(`/metadata/clients/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+    }
+
+    async deleteClient(id) {
+        return this.request(`/metadata/clients/${id}`, {
+            method: 'DELETE'
+        });
+    }
 }
 
 // Instancia global del servicio API
