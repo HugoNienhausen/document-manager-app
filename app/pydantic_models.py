@@ -115,4 +115,123 @@ class HealthCheck(BaseModel):
     status: str = Field(..., description="Estado de la aplicación")
     version: str = Field(..., description="Versión de la aplicación")
     uptime: float = Field(..., description="Tiempo de actividad en segundos")
-    timestamp: datetime = Field(default_factory=datetime.now, description="Fecha y hora de la verificación") 
+    timestamp: datetime = Field(default_factory=datetime.now, description="Fecha y hora de la verificación")
+
+
+# ============================================================================
+# MODELOS PARA DOCUMENTOS CON METADATOS
+# ============================================================================
+
+class DocumentMetadata(BaseModel):
+    """
+    Modelo para metadatos de documentos.
+    
+    Attributes:
+        document_type_id (int): ID del tipo de documento
+        client_id (Optional[int]): ID del cliente (opcional)
+        category_id (int): ID de la categoría
+        upload_date (Optional[datetime]): Fecha de subida (automática si no se especifica)
+    """
+    document_type_id: int = Field(..., description="ID del tipo de documento")
+    client_id: Optional[int] = Field(None, description="ID del cliente (opcional)")
+    category_id: int = Field(..., description="ID de la categoría")
+    upload_date: Optional[datetime] = Field(None, description="Fecha de subida")
+
+
+class DocumentUploadRequest(BaseModel):
+    """
+    Modelo para solicitud de subida de documento con metadatos.
+    
+    Attributes:
+        file (UploadFile): Archivo a subir
+        path (str): Ruta del directorio destino
+        metadata (DocumentMetadata): Metadatos del documento
+    """
+    path: str = Field(..., description="Ruta del directorio destino")
+    metadata: DocumentMetadata = Field(..., description="Metadatos del documento")
+
+
+class DocumentResponse(BaseModel):
+    """
+    Modelo de respuesta para documentos.
+    
+    Attributes:
+        id (int): ID del documento
+        filename (str): Nombre del archivo
+        file_hash (str): Hash del archivo
+        document_type (str): Tipo de documento
+        client (Optional[str]): Cliente (si aplica)
+        category (str): Categoría
+        local_path (str): Ruta local del archivo
+        file_size (int): Tamaño del archivo
+        upload_date (datetime): Fecha de subida
+        created_at (datetime): Fecha de creación del registro
+    """
+    id: int = Field(..., description="ID del documento")
+    filename: str = Field(..., description="Nombre del archivo")
+    file_hash: str = Field(..., description="Hash del archivo")
+    document_type: str = Field(..., description="Tipo de documento")
+    client: Optional[str] = Field(None, description="Cliente (si aplica)")
+    category: str = Field(..., description="Categoría")
+    local_path: str = Field(..., description="Ruta local del archivo")
+    file_size: int = Field(..., description="Tamaño del archivo")
+    upload_date: datetime = Field(..., description="Fecha de subida")
+    created_at: datetime = Field(..., description="Fecha de creación del registro")
+
+
+class DocumentUploadResponse(BaseModel):
+    """
+    Modelo de respuesta para subida de documentos con metadatos.
+    
+    Attributes:
+        message (str): Mensaje de confirmación
+        document (DocumentResponse): Información del documento creado
+        uploaded_at (datetime): Fecha de subida
+    """
+    message: str = Field(..., description="Mensaje de confirmación")
+    document: DocumentResponse = Field(..., description="Información del documento creado")
+    uploaded_at: datetime = Field(default_factory=datetime.now, description="Fecha de subida")
+
+
+class DocumentTypeResponse(BaseModel):
+    """
+    Modelo de respuesta para tipos de documento.
+    
+    Attributes:
+        id (int): ID del tipo de documento
+        name (str): Nombre del tipo de documento
+        description (Optional[str]): Descripción del tipo
+    """
+    id: int = Field(..., description="ID del tipo de documento")
+    name: str = Field(..., description="Nombre del tipo de documento")
+    description: Optional[str] = Field(None, description="Descripción del tipo")
+
+
+class ClientResponse(BaseModel):
+    """
+    Modelo de respuesta para clientes.
+    
+    Attributes:
+        id (int): ID del cliente
+        name (str): Nombre del cliente
+        email (Optional[str]): Email del cliente
+        phone (Optional[str]): Teléfono del cliente
+    """
+    id: int = Field(..., description="ID del cliente")
+    name: str = Field(..., description="Nombre del cliente")
+    email: Optional[str] = Field(None, description="Email del cliente")
+    phone: Optional[str] = Field(None, description="Teléfono del cliente")
+
+
+class CategoryResponse(BaseModel):
+    """
+    Modelo de respuesta para categorías.
+    
+    Attributes:
+        id (int): ID de la categoría
+        name (str): Nombre de la categoría
+        description (Optional[str]): Descripción de la categoría
+    """
+    id: int = Field(..., description="ID de la categoría")
+    name: str = Field(..., description="Nombre de la categoría")
+    description: Optional[str] = Field(None, description="Descripción de la categoría") 

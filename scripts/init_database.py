@@ -15,7 +15,9 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from app.database import engine, create_tables, SessionLocal
-from app.models import DocumentType, Category, Client
+from app.models.document_type import DocumentType
+from app.models.category import Category
+from app.models.client import Client
 from app.config import settings
 
 

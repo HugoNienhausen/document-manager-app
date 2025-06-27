@@ -100,6 +100,55 @@ export class ApiService {
     async healthCheck() {
         return this.request('/health');
     }
+
+    // ============================================================================
+    // MÉTODOS PARA DOCUMENTOS CON METADATOS
+    // ============================================================================
+
+    /**
+     * Sube un documento con metadatos
+     */
+    async uploadDocumentWithMetadata(file, path, documentTypeId, categoryId, clientId = null, uploadDate = null) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('path', path);
+        formData.append('document_type_id', documentTypeId);
+        formData.append('category_id', categoryId);
+        
+        if (clientId) {
+            formData.append('client_id', clientId);
+        }
+        
+        if (uploadDate) {
+            formData.append('upload_date', uploadDate);
+        }
+        
+        return this.request('/documents/upload', {
+            method: 'POST',
+            body: formData
+        });
+    }
+
+    /**
+     * Obtiene todos los tipos de documento
+     */
+    async getDocumentTypes() {
+        return this.request('/documents/types');
+    }
+
+    /**
+     * Obtiene todos los clientes
+     */
+    async getClients() {
+        return this.request('/documents/clients');
+    }
+
+    /**
+     * Obtiene todas las categorías
+     */
+    async getCategories() {
+        return this.request('/documents/categories');
+    }
 }
 
 // Instancia global del servicio API

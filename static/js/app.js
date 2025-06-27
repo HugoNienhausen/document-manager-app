@@ -9,6 +9,7 @@ import { validationService } from './modules/validation.js';
 import { uiService } from './modules/ui.js';
 import { rendererService } from './modules/renderer.js';
 import { fileManagerService } from './modules/fileManager.js';
+import { documentManagerService } from './modules/documentManager.js';
 
 class PDFManager {
     constructor() {
@@ -51,10 +52,14 @@ class PDFManager {
     }
 
     /**
-     * Muestra el modal de subida de archivos
+     * Muestra el modal de subida de archivos con metadatos
      */
-    showUploadModal() {
-        uiService.showUploadModal();
+    async showUploadModal() {
+        // Sincronizar la ruta actual con el documentManager
+        documentManagerService.setCurrentPath(fileManagerService.getCurrentPath());
+        
+        // Abrir modal de subida con metadatos
+        await documentManagerService.openUploadModal();
     }
 
     /**
@@ -72,10 +77,10 @@ class PDFManager {
     }
 
     /**
-     * Sube un archivo
+     * Sube un archivo con metadatos
      */
     async uploadFile() {
-        await fileManagerService.uploadFile();
+        await documentManagerService.uploadDocumentWithMetadata();
     }
 
     /**
@@ -97,6 +102,7 @@ class PDFManager {
      */
     navigateTo(path) {
         fileManagerService.navigateTo(path);
+        documentManagerService.setCurrentPath(path);
     }
 
     /**
@@ -104,6 +110,7 @@ class PDFManager {
      */
     navigateToParent() {
         fileManagerService.navigateToParent();
+        documentManagerService.setCurrentPath(fileManagerService.getCurrentPath());
     }
 
     /**
@@ -160,6 +167,7 @@ class PDFManager {
      */
     setCurrentPath(path) {
         fileManagerService.setCurrentPath(path);
+        documentManagerService.setCurrentPath(path);
     }
 }
 

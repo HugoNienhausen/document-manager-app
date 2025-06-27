@@ -83,19 +83,65 @@
         </div>
     </div>
 
-    <!-- Modal para Subir Archivo -->
+    <!-- Modal para Subir Documento con Metadatos -->
     <div id="uploadModal" class="modal">
         <div class="modal-content">
-            <h3><i class="fas fa-upload"></i> Subir PDF</h3>
+            <h3><i class="fas fa-upload"></i> Subir Documento PDF</h3>
+            <div class="modal-info">
+                <p><i class="fas fa-info-circle"></i> Complete los metadatos del documento para un mejor control</p>
+            </div>
             <form id="uploadForm" class="simple-form" enctype="multipart/form-data">
-                <div class="file-drop-zone" id="fileDropZone">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p>Arrastra un archivo PDF aquí o haz clic para seleccionar</p>
-                    <input type="file" id="pdfFile" name="file" accept=".pdf">
+                <!-- Selección de archivo -->
+                <div class="form-section">
+                    <label for="pdfFile" class="form-label">Archivo PDF</label>
+                    <div class="file-drop-zone" id="fileDropZone">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Arrastra un archivo PDF aquí o haz clic para seleccionar</p>
+                        <input type="file" id="pdfFile" name="file" accept=".pdf" required>
+                    </div>
                 </div>
+
+                <!-- Metadatos del documento -->
+                <div class="form-section">
+                    <h4><i class="fas fa-tags"></i> Metadatos del Documento</h4>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="documentType" class="form-label">Tipo de Documento *</label>
+                            <select id="documentType" name="documentType" required>
+                                <option value="">Cargando tipos...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="category" class="form-label">Categoría *</label>
+                            <select id="category" name="category" required>
+                                <option value="">Cargando categorías...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="client" class="form-label">Cliente (Opcional)</label>
+                            <select id="client" name="client">
+                                <option value="">Cargando clientes...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="uploadDate" class="form-label">Fecha de Subida</label>
+                            <input type="datetime-local" id="uploadDate" name="uploadDate">
+                            <small class="form-help">Dejar vacío para usar la fecha actual</small>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" onclick="pdfManager.closeModal('uploadModal')">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Subir</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Subir Documento
+                    </button>
                 </div>
             </form>
         </div>

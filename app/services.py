@@ -424,4 +424,301 @@ class FileService:
                 detail="Ruta inválida: no puede salir del directorio base"
             )
         
+        return clean_path
+
+
+class DocumentService:
+    """
+    Servicio para manejo de documentos con base de datos.
+    
+    Contiene toda la lógica de negocio relacionada con la subida,
+    registro y gestión de documentos con metadatos en la base de datos.
+    """
+    
+    def __init__(self):
+        """Inicializa el servicio con la ruta base de uploads."""
+        self.upload_path = get_upload_path()
+    
+    async def upload_document_with_metadata(
+        self, 
+        file: UploadFile, 
+        path: str, 
+        document_type_id: int,
+        category_id: int,
+        client_id: Optional[int] = None,
+        upload_date: Optional[datetime] = None
+    ):
+        """
+        Sube un documento y lo registra en la base de datos con metadatos.
+        
+        Args:
+            file (UploadFile): Archivo a subir
+            path (str): Ruta del directorio destino
+            document_type_id (int): ID del tipo de documento
+            category_id (int): ID de la categoría
+            client_id (Optional[int]): ID del cliente (opcional)
+            upload_date (Optional[datetime]): Fecha de subida (automática si no se especifica)
+            
+        Returns:
+            DocumentResponse: Información del documento creado
+            
+        Raises:
+            HTTPException: Si hay un error al subir el documento
+        """
+        from .database import get_db
+        from .models.document import Document
+        from .models.document_type import DocumentType
+        from .models.category import Category
+        from .models.client import Client
+        from .pydantic_models import DocumentResponse
+        
+        try:
+            # Validar el archivo
+            if not file.filename:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Nombre de archivo no válido"
+                )
+            
+            if not validate_file_extension(file.filename):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Solo se permiten archivos con extensiones: {settings.ALLOWED_EXTENSIONS}"
+                )
+            
+            # Crear el directorio si no existe
+            safe_path = self._sanitize_path(path)
+            full_dir_path = self.upload_path / safe_path
+            full_dir_path.mkdir(parents=True, exist_ok=True)
+            
+            # Generar nombre seguro para el archivo
+            safe_filename = get_safe_filename(file.filename)
+            file_path = full_dir_path / safe_filename
+            
+            # Verificar si el archivo ya existe
+            if file_path.exists():
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"El archivo '{safe_filename}' ya existe en el directorio"
+                )
+            
+            # Leer el contenido del archivo
+            content = await file.read()
+            
+            # Verificar tamaño del archivo
+            if len(content) > settings.MAX_FILE_SIZE:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"El archivo excede el tamaño máximo de {settings.MAX_FILE_SIZE} bytes"
+                )
+            
+            # Generar hash del archivo
+            file_hash = Document.generate_file_hash_from_content(content)
+            
+            # Verificar si ya existe un documento con el mismo hash
+            db = next(get_db())
+            existing_document = db.query(Document).filter(Document.file_hash == file_hash).first()
+            if existing_document:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Ya existe un documento con el mismo contenido (hash: {file_hash[:8]}...)"
+                )
+            
+            # Verificar que existan los tipos, categorías y cliente
+            document_type = db.query(DocumentType).filter(DocumentType.id == document_type_id).first()
+            if not document_type:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Tipo de documento con ID {document_type_id} no encontrado"
+                )
+            
+            category = db.query(Category).filter(Category.id == category_id).first()
+            if not category:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Categoría con ID {category_id} no encontrada"
+                )
+            
+            client = None
+            if client_id:
+                client = db.query(Client).filter(Client.id == client_id).first()
+                if not client:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Cliente con ID {client_id} no encontrado"
+                    )
+            
+            # Guardar el archivo
+            async with aiofiles.open(file_path, 'wb') as f:
+                await f.write(content)
+            
+            # Crear el registro en la base de datos
+            document = Document(
+                filename=safe_filename,
+                file_hash=file_hash,
+                document_type_id=document_type_id,
+                client_id=client_id,
+                category_id=category_id,
+                local_path=str(file_path),
+                file_size=len(content),
+                upload_date=upload_date or datetime.now()
+            )
+            
+            db.add(document)
+            db.commit()
+            db.refresh(document)
+            
+            # Obtener información relacionada para la respuesta
+            document_type_name = document_type.name
+            category_name = category.name
+            client_name = client.name if client else None
+            
+            return DocumentResponse(
+                id=document.id,
+                filename=document.filename,
+                file_hash=document.file_hash,
+                document_type=document_type_name,
+                client=client_name,
+                category=category_name,
+                local_path=document.local_path,
+                file_size=document.file_size,
+                upload_date=document.upload_date,
+                created_at=document.created_at
+            )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Error al subir documento: {str(e)}"
+            )
+    
+    async def get_document_types(self):
+        """
+        Obtiene todos los tipos de documento disponibles.
+        
+        Returns:
+            List[DocumentTypeResponse]: Lista de tipos de documento
+        """
+        from .database import get_db
+        from .models.document_type import DocumentType
+        from .pydantic_models import DocumentTypeResponse
+        
+        try:
+            db = next(get_db())
+            document_types = db.query(DocumentType).all()
+            
+            return [
+                DocumentTypeResponse(
+                    id=dt.id,
+                    name=dt.name,
+                    description=dt.description
+                )
+                for dt in document_types
+            ]
+            
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Error al obtener tipos de documento: {str(e)}"
+            )
+    
+    async def get_clients(self):
+        """
+        Obtiene todos los clientes disponibles.
+        
+        Returns:
+            List[ClientResponse]: Lista de clientes
+        """
+        from .database import get_db
+        from .models.client import Client
+        from .pydantic_models import ClientResponse
+        
+        try:
+            db = next(get_db())
+            clients = db.query(Client).all()
+            
+            return [
+                ClientResponse(
+                    id=c.id,
+                    name=c.name,
+                    email=c.email,
+                    phone=c.phone
+                )
+                for c in clients
+            ]
+            
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Error al obtener clientes: {str(e)}"
+            )
+    
+    async def get_categories(self):
+        """
+        Obtiene todas las categorías disponibles.
+        
+        Returns:
+            List[CategoryResponse]: Lista de categorías
+        """
+        from .database import get_db
+        from .models.category import Category
+        from .pydantic_models import CategoryResponse
+        
+        try:
+            db = next(get_db())
+            categories = db.query(Category).all()
+            
+            return [
+                CategoryResponse(
+                    id=c.id,
+                    name=c.name,
+                    description=c.description
+                )
+                for c in categories
+            ]
+            
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Error al obtener categorías: {str(e)}"
+            )
+    
+    def _sanitize_path(self, path: str) -> Path:
+        """
+        Sanitiza una ruta para evitar ataques de path traversal.
+        
+        Args:
+            path (str): Ruta a sanitizar
+            
+        Returns:
+            Path: Ruta sanitizada
+            
+        Raises:
+            HTTPException: Si la ruta es inválida
+        """
+        # Limpiar la ruta de caracteres peligrosos
+        clean_path = Path(path)
+        
+        # Verificar que no contenga componentes peligrosos
+        for part in clean_path.parts:
+            if part in ['.', '..'] or part.startswith('/'):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Ruta inválida: no puede contener '..' o rutas absolutas"
+                )
+        
+        # Construir la ruta completa
+        full_path = self.upload_path / clean_path
+        
+        # Verificar que la ruta normalizada no escape del directorio base
+        try:
+            full_path.resolve().relative_to(self.upload_path.resolve())
+        except (ValueError, RuntimeError):
+            raise HTTPException(
+                status_code=400,
+                detail="Ruta inválida: no puede salir del directorio base"
+            )
+        
         return clean_path 

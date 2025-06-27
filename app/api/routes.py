@@ -13,10 +13,11 @@ from typing import List
 import time
 import os
 
-from ..services import DirectoryService, FileService
+from ..services import DirectoryService, FileService, DocumentService
 from ..pydantic_models import (
     DirectoryInfo, FileInfo, DirectoryResponse, FileUploadResponse,
-    ErrorResponse, HealthCheck
+    ErrorResponse, HealthCheck, DocumentUploadResponse, DocumentResponse,
+    DocumentTypeResponse, ClientResponse, CategoryResponse
 )
 from ..config import settings
 
@@ -26,6 +27,7 @@ api_router = APIRouter(prefix="/api/v1", tags=["API"])
 # Variables globales para servicios
 directory_service = DirectoryService()
 file_service = FileService()
+document_service = DocumentService()
 
 # Variable para tracking de uptime
 start_time = time.time()
@@ -198,35 +200,36 @@ async def download_file(path: str):
         if not os.access(file_path, os.R_OK):
             raise HTTPException(
                 status_code=403,
-                detail=f"No tienes permisos para leer el archivo '{path}'"
+                detail=f"No tienes permisos para acceder al archivo '{path}'"
             )
         
+        # Obtener información del archivo
+        stat = file_path.stat()
+        file_size = stat.st_size
         print(f"✅ Archivo encontrado: {file_path}")
-        print(f"📏 Tamaño: {file_path.stat().st_size} bytes")
+        print(f"📏 Tamaño: {file_size} bytes")
         
+        # Retornar el archivo para descarga
         return FileResponse(
             path=str(file_path),
             filename=file_path.name,
-            media_type="application/pdf",
-            headers={
-                "Content-Disposition": f"attachment; filename=\"{file_path.name}\"",
-                "Cache-Control": "no-cache"
-            }
+            media_type="application/pdf"
         )
+        
     except HTTPException:
         raise
     except Exception as e:
         print(f"❌ Error al descargar archivo '{path}': {str(e)}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error interno del servidor al descargar '{path}': {str(e)}"
+            detail=f"Error interno del servidor: {str(e)}"
         )
 
 
 @api_router.get("/files/{path:path}", response_model=List[FileInfo])
 async def list_files(path: str):
     """
-    Lista todos los archivos PDF en un directorio.
+    Lista todos los archivos en un directorio.
     
     Args:
         path (str): Ruta del directorio
@@ -264,8 +267,22 @@ async def delete_file(path: str):
     """
     try:
         file_path = await file_service.get_file_path(path)
+        
+        # Verificar que el archivo existe
+        if not file_path.exists():
+            raise HTTPException(
+                status_code=404,
+                detail=f"Archivo '{path}' no encontrado"
+            )
+        
+        # Eliminar el archivo
         file_path.unlink()
-        return {"message": f"Archivo '{path}' eliminado exitosamente"}
+        
+        return {
+            "message": f"Archivo '{path}' eliminado exitosamente",
+            "deleted_at": time.time()
+        }
+        
     except HTTPException:
         raise
     except Exception as e:
@@ -278,7 +295,7 @@ async def delete_file(path: str):
 @api_router.delete("/directories/{path:path}")
 async def delete_directory(path: str):
     """
-    Elimina un directorio y todos sus contenidos.
+    Elimina un directorio y todo su contenido.
     
     Args:
         path (str): Ruta del directorio a eliminar
@@ -290,15 +307,172 @@ async def delete_directory(path: str):
         HTTPException: Si el directorio no existe o hay un error
     """
     try:
-        directory_info = await directory_service.get_directory_info(path)
-        safe_path = directory_service._sanitize_path(path)
-        full_path = directory_service.upload_path / safe_path
+        from pathlib import Path
+        from ..config import get_upload_path
         
-        # Eliminar directorio y todo su contenido
+        upload_path = get_upload_path()
+        full_path = upload_path / path
+        
+        # Verificar que el directorio existe
+        if not full_path.exists():
+            raise HTTPException(
+                status_code=404,
+                detail=f"Directorio '{path}' no encontrado"
+            )
+        
+        if not full_path.is_dir():
+            raise HTTPException(
+                status_code=400,
+                detail=f"'{path}' no es un directorio"
+            )
+        
+        # Eliminar el directorio y todo su contenido
         import shutil
         shutil.rmtree(full_path)
         
-        return {"message": f"Directorio '{path}' y su contenido eliminados exitosamente"}
+        return {
+            "message": f"Directorio '{path}' y todo su contenido eliminado exitosamente",
+            "deleted_at": time.time()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+
+# ============================================================================
+# RUTAS PARA DOCUMENTOS CON METADATOS
+# ============================================================================
+
+@api_router.post("/documents/upload", response_model=DocumentUploadResponse)
+async def upload_document_with_metadata(
+    file: UploadFile = File(..., description="Archivo PDF a subir"),
+    path: str = Form(..., description="Directorio destino"),
+    document_type_id: int = Form(..., description="ID del tipo de documento"),
+    category_id: int = Form(..., description="ID de la categoría"),
+    client_id: int = Form(None, description="ID del cliente (opcional)"),
+    upload_date: str = Form(None, description="Fecha de subida (YYYY-MM-DD HH:MM:SS)")
+):
+    """
+    Sube un documento PDF y lo registra en la base de datos con metadatos.
+    
+    Args:
+        file (UploadFile): Archivo PDF a subir
+        path (str): Ruta del directorio destino
+        document_type_id (int): ID del tipo de documento
+        category_id (int): ID de la categoría
+        client_id (int, optional): ID del cliente
+        upload_date (str, optional): Fecha de subida en formato YYYY-MM-DD HH:MM:SS
+        
+    Returns:
+        DocumentUploadResponse: Información del documento creado
+        
+    Raises:
+        HTTPException: Si hay un error al subir el documento
+    """
+    try:
+        from datetime import datetime
+        
+        # Parsear la fecha si se proporciona
+        parsed_upload_date = None
+        if upload_date:
+            try:
+                parsed_upload_date = datetime.fromisoformat(upload_date.replace('Z', '+00:00'))
+            except ValueError:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Formato de fecha inválido. Use YYYY-MM-DD HH:MM:SS"
+                )
+        
+        # Convertir client_id a None si es 0 o negativo
+        if client_id is not None and client_id <= 0:
+            client_id = None
+        
+        document = await document_service.upload_document_with_metadata(
+            file=file,
+            path=path,
+            document_type_id=document_type_id,
+            category_id=category_id,
+            client_id=client_id,
+            upload_date=parsed_upload_date
+        )
+        
+        return DocumentUploadResponse(
+            message=f"Documento '{document.filename}' subido y registrado exitosamente",
+            document=document,
+            uploaded_at=document.upload_date
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+
+@api_router.get("/documents/types", response_model=List[DocumentTypeResponse])
+async def get_document_types():
+    """
+    Obtiene todos los tipos de documento disponibles.
+    
+    Returns:
+        List[DocumentTypeResponse]: Lista de tipos de documento
+        
+    Raises:
+        HTTPException: Si hay un error al obtener los tipos
+    """
+    try:
+        return await document_service.get_document_types()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+
+@api_router.get("/documents/clients", response_model=List[ClientResponse])
+async def get_clients():
+    """
+    Obtiene todos los clientes disponibles.
+    
+    Returns:
+        List[ClientResponse]: Lista de clientes
+        
+    Raises:
+        HTTPException: Si hay un error al obtener los clientes
+    """
+    try:
+        return await document_service.get_clients()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno del servidor: {str(e)}"
+        )
+
+
+@api_router.get("/documents/categories", response_model=List[CategoryResponse])
+async def get_categories():
+    """
+    Obtiene todas las categorías disponibles.
+    
+    Returns:
+        List[CategoryResponse]: Lista de categorías
+        
+    Raises:
+        HTTPException: Si hay un error al obtener las categorías
+    """
+    try:
+        return await document_service.get_categories()
     except HTTPException:
         raise
     except Exception as e:

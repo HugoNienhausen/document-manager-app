@@ -305,6 +305,11 @@ export class UIService {
         const pageTitle = pathParts.length > 0 ? `${pathParts[pathParts.length - 1]} - PDF Manager` : 'PDF Manager';
         document.title = pageTitle;
     }
+
+    openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.style.display = 'block';
+    }
 }
 
 // Instancia global del servicio UI
