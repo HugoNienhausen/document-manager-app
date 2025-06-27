@@ -198,6 +198,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Crear instancia global
         window.pdfManager = new PDFManager();
         
+        // Exportar módulos globalmente para acceso desde HTML
+        window.settingsManager = settingsManager;
+        window.apiService = apiService;
+        window.fileManagerService = fileManagerService;
+        window.rendererService = rendererService;
+        window.uiService = uiService;
+        window.notificationService = notificationService;
+        
         console.log('PDF Manager inicializado con módulos');
         console.log('Módulos disponibles:', {
             apiService: !!window.apiService,
