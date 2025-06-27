@@ -5,6 +5,7 @@
 
 import { apiService } from './api.js';
 import { notificationService } from './notifications.js';
+import { uiService } from './ui.js';
 
 export class SettingsManagerService {
     constructor() {
@@ -433,7 +434,8 @@ export class SettingsManagerService {
     }
 
     async deleteItem(id, type) {
-        if (!confirm('¿Estás seguro de que quieres eliminar este elemento?')) {
+        const confirmed = await uiService.confirm(`¿Estás seguro de que quieres eliminar este ${this.getTypeLabel(type).toLowerCase()}?`);
+        if (!confirmed) {
             return;
         }
 
